@@ -1,0 +1,440 @@
+// Listing 8-1. The built-in calendar widget
+
+class WP_Widget_Calendar extends WP_Widget {
+	function WP_Widget_Calendar() {
+		// define widget title and description
+		$widget_ops = array('classname' => 'widget_calendar', 
+'description' => __( 'A calendar of your blog&#8217;s posts') );
+		// register the widget
+		$this->WP_Widget('calendar', __('Calendar'), $widget_ops);
+	}
+
+	// display the widget in the theme
+	function widget( $args, $instance ) {
+		extract($args);
+		// apply filters to the given title, or print non-breaking space if empty
+		$title = apply_filters('widget_title', empty($instance['title']) ?
+'&nbsp;' : $instance['title'], $instance, $this->id_base);
+		// before/after code for widget and title were defined in functions.php
+		echo $before_widget;
+		if ( $title )
+			echo $before_title . $title . $after_title;
+		// print the inner widget, the part that makes this widget unique
+		echo '<div id="calendar_wrap">';
+		get_calendar();
+		echo '</div>';
+		echo $after_widget;
+	}
+
+	// update the widget when new options have been entered
+	function update( $new_instance, $old_instance ) {
+		$instance = $old_instance;
+		// replace old with new
+		$instance['title'] = strip_tags($new_instance['title']);
+
+		return $instance;
+	}
+
+	// print the widget option form on the widget management screen
+	function form( $instance ) {
+		// combine provided fields with defaults
+		$instance = wp_parse_args( (array) $instance, array( 'title' => '' ) );
+		$title = strip_tags($instance['title']);
+		// print the form fields
+?>
+		<p><label for="<?php echo $this->get_field_id('title'); ?>">
+<?php _e('Title:'); ?></label>
+		<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
+<?php
+	}
+}
+
+
+//Listing 8-2. The form function
+
+// print the widget option form on the widget management screen
+function form( $instance ) {
+	// combine provided fields with defaults
+	$instance = wp_parse_args( (array) $instance, array( 'title' => '' ) );
+	$title = strip_tags($instance['title']);
+	// print the form fields
+?>
+	<p><label for="<?php echo $this->get_field_id('title'); ?>">
+<?php _e('Title:'); ?></label>
+	<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo esc_attr($title); ?>" /></p>
+<?php
+}
+
+
+// Listing 8-3. The update function
+
+// update the widget when new options have been entered
+function update( $new_instance, $old_instance ) {
+	$instance = $old_instance;
+	// replace old with new
+	$instance['title'] = strip_tags($new_instance['title']);
+
+	return $instance;
+}
+
+
+// Listing 8-4. The widget function
+
+// display the widget in the theme
+function widget( $args, $instance ) {
+	extract($args);
+	// apply filters to the given title, or print non-breaking space if empty
+	$title = apply_filters('widget_title', empty($instance['title']) ?
+'&nbsp;' : $instance['title'], $instance, $this->id_base);
+	// before/after code for widget and title were defined in functions.php
+	echo $before_widget;
+	if ( $title )
+		echo $before_title . $title . $after_title;
+	// print the inner widget, the part that makes this widget unique
+	echo '<div id="calendar_wrap">';
+	get_calendar();
+	echo '</div>';
+	echo $after_widget;
+}
+
+
+// Listing 8-5. A less compact way of processing the widget title
+
+// First, you’ll provide a non-breaking space if the title field was left empty.
+if (empty($instance['title']))
+	$title = '&nbsp;'; 
+else
+$title = $instance['title'];
+// Then, you need to apply filters, in case another plugin needs to alter widget titles
+$title = apply_filters('widget_title', $title, $instance, $this->id_base);
+
+
+// Listing 8-6. The setup function
+
+function WP_Widget_Calendar() {
+	// define widget title and description
+	$widget_ops = array('classname' => 'widget_calendar', 
+'description' => __( 'A calendar of your blog&#8217;s posts') );
+	// register the widget
+	$this->WP_Widget('calendar', __('Calendar'), $widget_ops);
+}
+
+
+// Listing 8-7. The Random Posts from Category widget 
+
+class RandomPostsFromCategory extends WP_Widget {
+function RandomPostsFromCategory() {
+	$widget_ops = array('classname' => 'random_from_cat', 'description' => 'random posts from a chosen category');
+	$this->WP_Widget('RandomPostsFromCategory', 'Random Posts from Category', $widget_ops);
+}
+
+
+function widget( $args, $instance ) {
+	extract( $args );
+	
+	$title = apply_filters('widget_title', empty( $instance['title'] ) ? 'Random Posts' : $instance['title']);
+	
+	echo $before_widget;
+	if ( $title) {
+		if ($instance['postlink'] == 1)  {
+			$before_title .= '<a href="'.get_category_link($instance['cat']).'">';
+			$after_title = '</a>'.$after_title;
+		}
+		echo $before_title.$title.$after_title;
+	}
+	?>
+	<ul>
+	<?php 
+	query_posts("cat=".$instance['cat']."&showposts=".$instance['showposts']."&orderby=rand"); 
+	// the Loop
+	if (have_posts()) : while (have_posts()) : the_post(); ?>
+              <li><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+              <?php 
+		if ($instance['content'] == 'excerpt')
+			the_excerpt();
+		elseif ($instance['content'] == 'content') 
+			the_content();
+	endwhile; endif;
+	?>
+	</ul>
+	<?php
+	echo $after_widget;
+	wp_reset_query();
+}
+
+
+function update( $new_instance, $old_instance ) {
+	$instance = $old_instance;
+	$instance['title'] = strip_tags($new_instance['title']);
+	$instance['cat'] = $new_instance['cat'];
+	$instance['showposts'] = $new_instance['showposts'];
+	$instance['content'] = $new_instance['content'];
+	$instance['postlink'] = $new_instance['postlink'];
+	return $instance;
+}
+
+function form( $instance ) {
+	//Defaults
+		$instance = wp_parse_args( (array) $instance, array( 
+				'title' => 'Random Posts',
+				'cat' => 1,
+				'showposts' => 1,
+				'content' => 'title',
+				'postlink' => 0));	
+?>  
+       
+<p>
+<label for="<?php echo $this->get_field_id('title'); ?>">Title:</label> 
+<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" 
+	name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $instance['title']; ?>" />
+</p>
+
+<p><label for="<?php echo $this->get_field_id('cat'); ?>">Show posts from category:</label> 
+<?php wp_dropdown_categories(array('name' => $this->get_field_name('cat'), 'hide_empty'=>0, 'hierarchical'=>1, 'selected'=>$instance['cat'])); ?></label>
+</p>
+
+<p>
+<input id="<?php echo $this->get_field_id('postlink'); ?>" name="<?php echo $this->get_field_name('postlink'); ?>" 
+	type="checkbox" <?php checked($instance['postlink'], 1); ?> value="1" />
+<label for="<?php echo $this->get_field_id('postlink'); ?>">Link widget title to category archive</label>
+</p>
+
+<p><label for="<?php echo $this->get_field_id('showposts'); ?>">Number of posts to show:</label> 
+<input class="widefat" id="<?php echo $this->get_field_id('showposts'); ?>" name="<?php echo $this->get_field_name('showposts'); ?>" 
+	type="text" value="<?php echo $instance['showposts']; ?>" />
+</p>
+
+<p>
+<label for="<?php echo $this->get_field_id('content'); ?>">Display:</label> 
+<select id="<?php echo $this->get_field_id('content'); ?>" name="<?php echo $this->get_field_name('content'); ?>" class="postform">
+	<option value="title"<?php selected( $instance['content'], 'title' ); ?>>Title Only</option>
+	<option value="excerpt"<?php selected( $instance['content'], 'excerpt' ); ?>>Title and Excerpt</option>
+	<option value="content"<?php selected( $instance['content'], 'content' ); ?>>Title and Content</option>
+</select>
+</p>
+
+<?php
+	} // function form
+} // widget class
+
+
+// Listing 8-8. The widget setup function
+
+function RandomPostsFromCategory() {
+	$widget_ops = array('classname' => 'random_from_cat', 'description' => 'random posts from a chosen category');
+	$this->WP_Widget('RandomPostsFromCategory', 'Random Posts from Category', $widget_ops);
+}
+
+
+// Listing 8-9. The widget function
+
+function widget( $args, $instance ) {
+	extract( $args );
+	
+	$title = apply_filters('widget_title', empty( $instance['title'] ) ? 'Random Posts' : $instance['title']);
+	
+	echo $before_widget;
+	if ( $title) {
+		if ($instance['postlink'] == 1)  {
+			$before_title .= '<a href="'.get_category_link($instance['cat']).'">';
+			$after_title = '</a>'.$after_title;
+		}
+		echo $before_title.$title.$after_title;
+	}
+	?>
+	<ul>
+	<?php 
+	query_posts("cat=".$instance['cat']."&showposts=".$instance['showposts']."&orderby=rand"); 
+	// the Loop
+	if (have_posts()) : while (have_posts()) : the_post(); ?>
+              <li><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+              <?php 
+		if ($instance['content'] == 'excerpt')
+			the_excerpt();
+		elseif ($instance['content'] == 'content') 
+			the_content();
+	endwhile; endif;
+	?>
+	</ul>
+	<?php
+	echo $after_widget;
+	wp_reset_query();
+}
+
+
+// Listing 8-10. The update function
+
+function update( $new_instance, $old_instance ) {
+	$instance = $old_instance;
+	$instance['title'] = strip_tags($new_instance['title']);
+	$instance['cat'] = $new_instance['cat'];
+	$instance['showposts'] = $new_instance['showposts'];
+	$instance['content'] = $new_instance['content'];
+	$instance['postlink'] = $new_instance['postlink'];
+	return $instance;
+}
+
+
+// Listing 8-11. The form function
+function form( $instance ) {
+	//Defaults
+		$instance = wp_parse_args( (array) $instance, array( 
+				'title' => 'Random Posts',
+				'cat' => 1,
+				'showposts' => 1,
+				'content' => 'title',
+				'postlink' => 0));	
+?>  
+       
+<p>
+<label for="<?php echo $this->get_field_id('title'); ?>">Title:</label> 
+<input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" 
+	name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $instance['title']; ?>" />
+</p>
+
+<p><label for="<?php echo $this->get_field_id('cat'); ?>">Show posts from category:</label> 
+<?php wp_dropdown_categories(array('name' => $this->get_field_name('cat'), 'hide_empty'=>0, 'hierarchical'=>1, 'selected'=>$instance['cat'])); ?></label>
+</p>
+
+<p>
+<input id="<?php echo $this->get_field_id('postlink'); ?>" name="<?php echo $this->get_field_name('postlink'); ?>" 
+	type="checkbox" <?php checked($instance['postlink'], 1); ?> value="1" />
+<label for="<?php echo $this->get_field_id('postlink'); ?>">Link widget title to category archive</label>
+</p>
+
+<p><label for="<?php echo $this->get_field_id('showposts'); ?>">Number of posts to show:</label> 
+<input class="widefat" id="<?php echo $this->get_field_id('showposts'); ?>" name="<?php echo $this->get_field_name('showposts'); ?>" 
+	type="text" value="<?php echo $instance['showposts']; ?>" />
+</p>
+
+<p>
+<label for="<?php echo $this->get_field_id('content'); ?>">Display:</label> 
+<select id="<?php echo $this->get_field_id('content'); ?>" name="<?php echo $this->get_field_name('content'); ?>" class="postform">
+	<option value="title"<?php selected( $instance['content'], 'title' ); ?>>Title Only</option>
+	<option value="excerpt"<?php selected( $instance['content'], 'excerpt' ); ?>>Title and Excerpt</option>
+	<option value="content"<?php selected( $instance['content'], 'content' ); ?>>Title and Content</option>
+</select>
+</p>
+
+<?php
+	} // function form
+
+
+// Listing 8-12. The alternative to checked(); not recommended
+
+<?php if ($instance['postlink']) { ?> checked="checked" <?php } ?>
+
+
+// Listing 8-13. The Dashboard Notepad widget source code
+
+function dashboard_notepad_widget() {
+	$options = dashboard_notepad_widget_options();
+	if (!empty($_POST['dashboard_notepad_submit']) ) {			
+		$options['notes'] =  stripslashes($_POST['dashboard_notepad']);
+
+		update_option('dashboard_notepad', $options);
+	} else
+		$dashboard_notepad = htmlspecialchars($options['notes'], ENT_QUOTES);
+	$form = '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
+	$form .= '<textarea id="dashboard_notepad" name="dashboard_notepad" style="width: 95%; height: 12em; background: #fcfcfc;"';
+	$form .= '>'. $options['notes'].'</textarea>';
+	$form .= '<p><input type="submit" value="Save Notes" class="button widget-control-save"></p> 
+	<input type="hidden" name="dashboard_notepad_submit" value="true" />';
+	$form .= '</form>';
+	echo $form;
+}
+
+function dashboard_notepad_widget_setup() {
+	$options = dashboard_notepad_widget_options();
+	if (!is_array($options)) $options = array('notepad_title' => 'Notepad');
+	wp_add_dashboard_widget( 'dashboard_notepad_widget_id', $options['notepad_title'], 'dashboard_notepad_widget');
+}
+
+function dashboard_notepad_widget_options() {
+	$defaults = array( 'notes' => 'Enter here whatever is on your mind.', 
+		'notepad_title' => 'Notepad');
+	$options = get_option('dashboard_notepad');
+	if (!is_array($options)) $options = array();
+	return array_merge( $defaults, $options );
+}
+
+add_action('wp_dashboard_setup', 'dashboard_notepad_widget_setup');
+
+
+// Listing 8-14. Dashboard Notepad widget with options configuration screen
+
+function dashboard_notepad_widget() {
+	$options = dashboard_notepad_widget_options();
+	if (!empty($_POST['dashboard_notepad_submit']) ) {			
+		$options['notes'] =  stripslashes($_POST['dashboard_notepad']);
+		update_option('dashboard_notepad', $options);
+	} else
+		$dashboard_notepad = htmlspecialchars($options['notes'], ENT_QUOTES);
+	if (current_user_can($options['can_edit'])) $admin = TRUE;
+	else $admin = FALSE;
+	$form = '<form method="post" action="'.$_SERVER['PHP_SELF'].'">';
+	$form .= '<textarea id="dashboard_notepad" name="dashboard_notepad" style="width: 95%; height: 12em; background: #fcfcfc;"';
+	if (!$admin) $form.= ' readonly="readonly"';
+	$form .= '>'. $options['notes'].'</textarea>';
+	if ($admin) $form .= '<p><input type="submit" value="Save Notes" class="button widget-control-save"></p> 
+		<input type="hidden" name="dashboard_notepad_submit" value="true" />';
+	$form .= '</form>';
+	echo $form;
+}
+ 
+function dashboard_notepad_widget_setup() {
+	$options = dashboard_notepad_widget_options();
+	if (!is_array($options)) $options = array('notepad_title' => 'Notepad');
+        if (current_user_can($options['can_read'])) {
+		wp_add_dashboard_widget( 'dashboard_notepad_widget_id', $options['notepad_title'], 'dashboard_notepad_widget', 'dashboard_notepad_widget_control' );
+	}
+}
+
+add_action('wp_dashboard_setup', 'dashboard_notepad_widget_setup');
+
+function dashboard_notepad_widget_options() {
+	$defaults = array( 'notes' => 'Enter here whatever is on your mind.', 'can_edit' => 'edit_dashboard', 'can_read' => 'read', 'notepad_title' => 'Notepad');
+	$options = get_option('dashboard_notepad');
+	if (!is_array($options)) $options = array();
+	return array_merge( $defaults, $options );
+}
+
+function dashboard_notepad_widget_control() {
+	$options = dashboard_notepad_widget_options();
+	if ( 'post' == strtolower($_SERVER['REQUEST_METHOD']) && isset( $_POST['widget_id'] ) && 'dashboard_notepad_widget_id' == $_POST['widget_id'] ) {
+		if ( isset($_POST['can_edit']) )
+			$options['can_edit'] = $_POST['can_edit'];
+		if ( isset($_POST['can_read']) )
+			$options['can_read'] = $_POST['can_read'];
+		if ( isset($_POST['notepad_title']) )
+			$options['notepad_title'] = $_POST['notepad_title'];
+		update_option( 'dashboard_notepad', $options );
+	}
+?>
+	<p><label for="notepad_title">Widget title:</label>
+		<input type="text" id="notepad_title" name="notepad_title" value="<?php echo $options['notepad_title']; ?>" /></p>
+        <p>
+        <select id="can_edit" name="can_edit">
+		<option value="edit_dashboard" <?php selected('edit_dashboard', $options['can_edit']); ?>>Admins</option>
+		<option value="edit_pages" <?php selected('edit_pages', $options['can_edit']); ?>>Editors</option>
+		<option value="publish_posts" <?php selected('publish_posts', $options['can_edit']); ?>>Authors</option>
+		<option value="edit_posts" <?php selected('edit_posts', $options['can_edit']); ?>>Contributors</option>
+		<option value="read" <?php selected('read', $options['can_edit']); ?>>Subscribers</option>
+	</select>
+        <label for="can_edit">and above can <strong>edit</strong> the notes.</label>
+	</p>
+    <p>
+	<select id="can_read" name="can_read">
+		<option value="edit_dashboard" <?php selected('edit_dashboard', $options['can_read']); ?>>Admins</option>
+		<option value="edit_pages" <?php selected('edit_pages', $options['can_read']); ?>>Editors</option>
+		<option value="publish_posts" <?php selected('publish_posts', $options['can_read']); ?>>Authors</option>
+		<option value="edit_posts" <?php selected('edit_posts', $options['can_read']); ?>>Contributors</option>
+		<option value="read" <?php selected('read', $options['can_read']); ?>>Subscribers</option>
+	</select>
+        <label for="can_read">and above can <strong>read</strong> the notes.</label>
+	</p>
+<?php
+}
+
+
+// 

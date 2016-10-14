@@ -1,0 +1,192 @@
+// Listing 10-1. HTML tags and attributes allowed in filtered HTML fields
+
+<a href="" title="">
+<abbr title=""> 
+<acronym title="">
+<b>
+<blockquote cite=""> 
+<cite> 
+<code> 
+<del datetime=""> 
+<em> 
+<i> 
+<q cite=""> 
+<strike> 
+<strong>
+
+
+// Listing 10-2. Displaying user information in a post footer
+
+<div id="entry-author-info">
+	<div id="author-avatar">
+		<?php echo get_avatar(get_the_author_meta('user_email')); ?>
+	</div>
+	<div id="author-description">
+		<h2>About <?php the_author(); ?></h2>
+		<?php the_author_meta('description'); ?>
+		<div id="author-link">
+			<a href="<?php echo get_author_posts_url( $authordata->ID ); ?>" title="View all posts by <?php get_the_author(); ?>">
+			View all posts by <?php the_author(); ?> &rarr;</a>
+		</div>
+	</div>
+</div>
+
+
+// Listing 10-3. Changing user profile contact fields
+
+function change_contactmethod( $contactmethods ) {
+	// Add some fields
+	$contactmethods['twitter'] = 'Twitter Name (no @)';
+	$contactmethods['phone'] = 'Phone Number';
+	$contactmethods['title'] = 'Title';
+	// Remove AIM, Yahoo IM, Google Talk/Jabber
+	unset($contactmethods['aim']);
+	unset($contactmethods['yim']);
+	unset($contactmethods['jabber']);
+	// make it go!
+	return $contactmethods;
+}
+add_filter('user_contactmethods','change_contactmethod',10,1);
+
+
+// Listing 10-4. Adding user profile fields
+
+<?php
+/*
+Plugin Name: Stephanie’s Extra User Profile Fields
+Plugin URI: http://sillybean.net/
+Description: Adds an extra field (the birth year) to the user profile. Loosely based on PJW User Meta by Peter Westwood.
+Author: Stephanie Leary
+Version: 1.0
+Author URI: http://sillybean.net/
+*/
+// Usage: the_author_meta('birth_year'); will display the birth year in templates
+
+// Show new fields in the form
+add_action( 'show_user_profile', 'show_more_profile_fields' );
+add_action( 'edit_user_profile', 'show_more_profile_fields' );
+
+// Save the new fields when the profile is edited
+add_action( 'personal_options_update', 'save_more_profile_fields' );
+add_action( 'edit_user_profile_update', 'save_more_profile_fields' );
+
+function show_more_profile_fields( $user ) { ?>
+
+	<h3>Other information</h3>
+	<table class="form-table">
+		<tr>
+			<th><label for="birth_year"><?php _e('Birth Year'); ?></label></th>
+			<td><input type="text" name="birth_year" id="birth_year" value="<?php echo esc_attr(get_user_meta($user->ID, 'birth_year', true) ); ?>" /></td>
+		</tr>
+	</table>
+
+<?php }
+function save_more_profile_fields( $user_id ) {
+	update_user_meta( $user_id, 'birth_year', $_POST['birth_year'], get_user_meta($user->ID, 'birth_year', true));
+}
+?>
+
+
+// Listing 10-5. Building a user directory
+
+<?php
+/*
+Template Name: Staff Directory
+*/
+   //get all registered users
+   $blogusers = get_users_of_blog(); 
+   foreach ($blogusers as $bloguser) {
+	//get data about each user as an object
+	$user = get_userdata($bloguser->user_id); 
+	// create a flat array with only the fields we need
+	$allusers[$user->ID] = array(
+		'name' => $user->display_name,
+		'title' => $user->title,
+		'phone' => $user->phone,
+		'twitter' => $user->twitter
+	);
+}
+?>
+<table id="staff-directory" class="sortable">
+<thead>
+	<tr>
+          <th>Name</th>
+          <th>Title</th>
+          <th>Phone</th>
+          <th>Twitter</th>
+        </tr>
+</thead>
+<tbody>
+<?php
+foreach ($allusers as $auser) {  ?>
+	<tr>
+           <td><?php echo $auser['name']; ?></td>
+           <td><?php echo $auser['title']; ?></td>
+           <td><?php echo $auser['phone']; ?></td>
+           <td><a href="http://twitter.com/<?php echo $auser['twitter']; ?>">
+		@<?php echo $auser['twitter']; ?></a></td>
+	</tr>
+<?php } ?>
+</tbody>
+</table>
+
+
+// Listing 10-6. Modifying an existing role
+
+<?php 
+// allow subscribers to view private posts and pages
+$PrivateRole = get_role('subscriber');
+$PrivateRole -> add_cap('read_private_pages');
+$PrivateRole -> add_cap('read_private_posts');
+?>
+
+
+// Listing 10-7. Creating a new role
+
+<?php
+add_role('privatereader', 'Private Reader', array(
+            'read' => 1,
+            'level_0' => 1,
+            'read_private_pages' => 1,
+            'read_private_posts' => 1,
+        ));
+?>
+
+
+// Listing 10-8. Modifying the new role
+
+<?php
+// remove ability to read private pages
+$PrivateRole = get_role('privatereader');
+$PrivateRole -> remove_cap('read_private_pages');
+?>
+
+
+// Listing 10-9. Creating a designer role
+<?php
+$admin = get_role('administrator');
+
+// get_role returns an object.
+// We want the capabilities piece, which is an array.
+$caps = $admin->capabilities;
+
+// Remove the stuff we don't want in the new role.
+unset($caps['activate_plugins']);
+unset($caps['edit_plugins']);
+unset($caps['update_plugins']);
+unset($caps['delete_plugins']);
+unset($caps['install_plugins']);
+unset($caps['edit_users']);
+unset($caps['delete_users']);
+unset($caps['create_users']);
+unset($caps['import']);
+
+// Add the new role.
+add_role('designer', 'Designer', $caps);
+?>
+
+
+// Listing 10-10. Removing a role
+<?php
+remove_role('designer');
+?>

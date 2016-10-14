@@ -1,0 +1,745 @@
+// Listing 12-1. Registering a new taxonomy
+register_taxonomy(
+	'people', //Taxonomy name
+	array('attachment:image', 'attachment:video', 'attachment:audio', 'post', 'page'), //Content object type
+	array(
+	'labels' => array(
+		'name' => __( 'People' ), 
+		'singular_name' => __( 'Person' ),
+	),
+	'helps' => __('Separate names with commas.'),
+	'rewrite' => array('slug' => 'person'),
+	'query_var' => true,
+	'show_ui' => true,
+	'show_tagcloud' => true,
+	'hierarchical' => false,
+	)
+);
+
+
+// Listing 12-2. Creating the series book taxonomies 
+
+<?php
+/*
+Plugin Name: Series Book Taxonomies
+*/
+
+add_action('init', 'create_book_series_tax');
+register_activation_hook( __FILE__, 'activate_book_series_tax' );
+
+function activate_book_series_tax() {
+	create_book_series_tax();
+	$GLOBALS['wp_rewrite']->flush_rules();
+}
+
+function create_book_series_tax() {
+	register_taxonomy(
+		'genre',
+		'post',
+		array(
+	'labels' => array(
+'name' => __( 'Genres' ), 
+'singular_name' => __( 'Genre' ),
+),
+			'helps' => __('Separate genres with commas.'),
+		)
+	);
+	register_taxonomy(
+		'author',
+		array('attachment:image', 'attachment:video', 'attachment:audio', 'post', 'page'),
+		array(
+	'labels' => array(
+'name' => __( 'Authors' ), 
+'singular_name' => __( 'Author' ),
+),
+			'helps' => __('Separate authors with commas.'),
+			'rewrite' => array('slug' => 'author'),
+			'query_var' => 'author',
+		)
+	);
+	register_taxonomy(
+		'status',
+		'post',
+		array(
+	'labels' => array(
+'name' => __( 'Completion Status' ), 
+'singular_name' => __( 'Status' ),
+),
+			'helps' => __('Enter the series status (completed, ongoing, etc.).'),
+		)
+	);
+}
+?>
+
+
+// Listing 12-3. Changing Genres to a hierarchical taxonomy
+
+register_taxonomy(
+	'genre',
+	'post',
+	array(
+	'labels' => array(
+		'name' => __( 'Genres' ), 
+		'singular_name' => __( 'Genre' ),
+	),
+	'hierarchical' => true,
+	)
+);
+
+
+// Listing 12-4. A new taxonomy.php file for the Twenty Ten theme
+
+<?php get_header(); ?>
+
+		<div id="container">
+			<div id="content">
+
+<?php the_post(); ?>
+		<h1 class="page-title">
+		<?php 
+			$term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) ); 
+			echo ucwords($term->taxonomy) . ': ' . $term->name;
+		?></h1>
+
+<?php rewind_posts(); ?>
+
+<?php get_generic_template( 'loop', 'archive' ); ?>
+
+			</div><!-- #content -->
+		</div><!-- #container -->
+
+<?php get_sidebar(); ?>
+<?php get_footer(); ?>
+
+
+// Listing 12-5. The <h1> heading in taxonomy-genre.php
+
+<h1 class="page-title">
+<?php 
+	$term = get_term_by( 'slug', get_query_var( 'term' ), get_query_var( 'taxonomy' ) ); 
+	echo 'Posts in the '.$term->name.' '.$term->taxonomy;
+?></h1>
+
+
+// Listing 12-6. Result of the_taxonomies()
+
+Categories: Main. Post Tags: boarding schools, magic, and wizards. Genres: Fantasy and Young Adult. Authors: J. K. Rowling. Completion Status: completed.	
+
+
+
+// Listing 12-7. Listing the terms of a particular taxonomy alongside categories and tags
+
+<p>Posted in <?php the_category(',') ?> 
+<?php echo get_the_term_list( $post->ID, 'series', 'in the series ', ', ', '' ); ?></p>
+<?php if ( the_tags('<p>Tagged with ', ', ', '</p>') ) ?>
+ 
+
+// Listing 12-8. Listing taxonomy terms
+
+<ul id="authors"> 
+   <?php
+	$authors = get_terms('authors'); 
+	foreach ($authors as $author) { ?>
+		<li><a href="<?php echo get_term_link( $author, 'authors') ?>"><?php echo $author->name; ?></a> <span class="comments"><?php echo $author->description; ?></span>  </li>
+<?php } ?>
+</ul>
+
+
+// Listing 12-9. Listing all registered taxonomies
+
+<ul id="taxonomies"> 
+<?php
+$taxes = get_taxonomies();
+	foreach ($taxes as $tax) echo '<li>'.$tax.'</li>';
+?>
+</ul>
+
+
+// <ul id="taxonomies"> 
+<?php
+$taxes = get_taxonomies(array('_builtin' => false));
+foreach ($taxes as $tax) echo '<li>'.$tax.'</li>';
+?>
+</ul>
+
+
+// Listing 12-11. Creating a new content type
+
+register_post_type(
+	'mytype', 
+	array(
+		'labels' => array(
+			'name' => __( 'My Types' ),
+			'singular_name' => __( 'My Type' ),
+		),
+	        'public' => true, 
+	        'supports' => array(
+			'title',
+			'editor',
+			'author',
+	               	'excerpts',
+	               	'custom-fields',
+	               	'revisions',
+'thumbnail')
+	           ) 
+	 );
+register_taxonomy_for_object_type('category', 'mytype');
+register_taxonomy_for_object_type('post-tag', 'mytype');
+?>
+
+
+// Listing 12-12. Creating a non-hierarchical content type for courses
+
+function post_type_courses() {
+	register_post_type(
+		'course', 
+		array(
+			'labels' => array(
+				'name' => __( 'Courses' ),
+				'singular_name' => __( 'Course' ),
+			),
+		        'public' => true, 
+		        'supports' => array(
+				'title',
+				'editor',
+				'author',
+		               	‘excerpt’,
+		               	'custom-fields',
+		               	'revisions',)
+		           ) 
+		 );
+	register_taxonomy_for_object_type('category', 'course');
+}
+
+
+// Listing 12-13. Creating a non-hierarchical content type for courses
+
+<?php
+/*
+Plugin Name: Course Post Types
+*/
+
+/* Content Types */
+
+add_action('init', 'post_type_courses');
+
+function post_type_courses() {
+	register_post_type(
+		'course', 
+		array(
+			'labels' => array(
+				'name' => __( 'Courses' ),
+				'singular_name' => __( 'Course' ),
+			),
+		        'public' => true, 
+		        'show_ui' => true,
+				'rewrite' => true,
+				'query_var' => true,
+				'hierarchical' => true,
+		       		'supports' => array(
+					'title',
+					'editor',
+					'author',
+		                 	‘excerpt’,
+		                 	'custom-fields',
+		                 	'revisions',
+					'page-attributes',)
+		           ) 
+		 );
+	register_taxonomy_for_object_type('category', 'course');
+}
+?>
+
+
+// Listing 12-14. Adding custom taxonomies to the course content type
+
+<?php
+/*
+Plugin Name: Course Post Types
+*/
+
+/* Content Types */
+
+add_action('init', 'post_type_courses');
+
+function post_type_courses() {
+	register_post_type(
+		'course', 
+		array(
+			'labels' => array(
+				'name' => __( 'Courses' ),
+				'singular_name' => __( 'Course' ),
+			),
+		        'public' => true, 
+		        'supports' => array(
+				'title',
+				'editor',
+				'author',
+		                ‘excerpt’,
+		                'custom-fields',
+		                'revisions',)
+		           ) 
+		 );
+	register_taxonomy_for_object_type('college', 'course');
+}
+
+/* Taxonomies */
+
+add_action('init', 'create_course_series_tax');
+register_activation_hook( __FILE__, 'activate_course_series_tax' );
+ 
+function activate_course_series_tax() {
+	create_course_series_tax();
+	$GLOBALS['wp_rewrite']->flush_rules();
+}
+
+function create_course_series_tax() {
+		register_taxonomy(
+		'college',
+		'course',
+		array(
+			'labels' => array(
+				'name' => __( 'Colleges' ),
+				'singular_name' => __( 'College' ),
+			),
+			'hierarchical' => true,
+		)
+	);
+}
+?>
+
+
+// Listing 12-15. Changing column headers for the course content type
+
+/* Custom Edit Columns */
+add_filter("manage_edit-course_columns", "course_taxonomy_columns");
+
+// rearrange the columns on the Edit screens
+function course_taxonomy_columns($defaults) {
+	// insert college taxonomy column
+	$defaults['colleges'] = __('Colleges');
+	return $defaults;
+}
+
+
+// add_filter("manage_edit-course_columns", "course_taxonomy_columns");
+
+// rearrange the columns on the Edit screens
+function course_taxonomy_columns($defaults) {
+	// preserve the default date and comment columns
+	$comments = $defaults['comments'];
+	$date = $defaults['date'];
+
+	// remove default date and comments
+	unset($defaults['comments']);
+	unset($defaults['date']);
+
+	// insert college taxonomy column
+    	$defaults['colleges'] = __('Colleges');
+
+	// restore default date and comments
+	$defaults['comments'] = $comments;
+	$defaults['date'] = $date;
+
+return $defaults;
+}
+
+
+// add_action("manage_pages_custom_column", "course_taxonomy_custom_column");
+// for non-hierarchical content types, use the following instead:
+// add_action("manage_posts_custom_column", "course_taxonomy_custom_column");
+
+// print the college taxonomy terms, linked to filter the posts to this taxonomy term only
+function course_taxonomy_custom_column($column) {
+	global $post;
+	if ($column == 'colleges') {
+		$colleges = get_the_terms($post->ID, 'college'); 
+		if (!empty($colleges)) {
+			$thecolleges = array();
+			foreach ($colleges as $college) {
+				$thecolleges[] = '<a href="edit.php?post_type=course&college='.$college->slug.'>' . esc_html(sanitize_term_field('name', $college->name, $college->term_id, 'college', 'display')) . "</a>";
+			}
+			echo implode(', ', $thecolleges);
+		}
+	} 
+}
+
+
+// Listing 12-18. A content archive page template for courses
+
+<?php
+/*
+Template Name: Custom Content Archive
+*/
+
+$wp_query = null;
+$wp_query = new WP_Query();
+$wp_query->query('post_type=course');
+$posts = null;
+$posts = $wp_query->posts; 
+?>
+
+<?php get_header(); ?>
+
+
+<div id="container">
+	<div id="content">
+  
+<?php if ($wp_query->have_posts() ) : while ($wp_query->have_posts() ) : $wp_query->the_post(); ?>
+	<div id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+		<h1 class="entry-title"><?php the_title(); ?></h1>
+		<div class="entry-content"> 
+			   <?php the_content(); ?>
+		</div><!-- .entry-content -->
+	</div><!-- #post-<?php the_ID(); ?> -->
+<?php endwhile; endif; ?>
+
+	</div><!-- #content -->
+</div><!-- #container -->
+
+<?php get_sidebar(); ?>
+<?php get_footer(); ?>
+
+
+// Listing 12-19. Showing the course content type alongside posts on the home page
+
+add_filter( 'pre_get_posts', 'my_get_posts' );
+
+function my_get_posts( $query ) {
+	if ( is_home() )
+		$query->set( 'post_type', array( 'post', 'course' ) );
+	return $query;
+}
+
+
+// Listing 12-20. Showing the course content type alongside posts in the site feed
+
+add_filter( 'pre_get_posts', 'my_get_posts' );
+
+function my_get_posts( $query ) {
+	if ( is_home() || is_feed() )
+		$query->set( 'post_type', array( 'post', 'course' ) );
+	return $query;
+}
+
+
+// Listing 12-21. Updating the post_type_courses() function to include callback argument
+
+function post_type_courses() {
+	register_post_type(
+		'course', 
+		array(
+			'labels' => array(
+				'name' => __( 'Courses' ),
+				'singular_name' => __( 'Course' ),
+			),
+			'description' => __('Individual course data'),
+		        'public' => true, 
+		        'show_ui' => true,
+			'register_meta_box_cb' => 'course_meta_boxes',
+		        'supports' => array(
+				'title',
+				'editor',
+				'author',
+		                ‘excerpt’,
+		                'custom-fields',
+		                'revisions',)
+		           ) 
+		 );
+	register_taxonomy_for_object_type('college', 'course');
+}
+
+
+
+// Listing 12-22. The callback function that adds meta boxes
+
+/* Custom Fields */
+function course_meta_boxes() {
+	add_meta_box( 'course_code_meta', __('Course Code'), 'course_code_meta_box', 'course', 'normal', 'high' );
+	add_meta_box( 'instructor_meta', __('Instructor'), 'instructor_meta_box', 'course', 'normal', 'high' );
+}
+
+
+// Listing 12-23. Printing the meta boxes
+function course_code_meta_box() {
+	global $post; 
+	$code = get_post_meta($post->ID, '_course_code', true);
+	if ( function_exists('wp_nonce_field') ) wp_nonce_field('course_code_nonce', '_course_code_nonce');
+?>
+	<label for="_course_code">Course Code (e.g. ENGL 101)</label> 
+	<input type="text" name="_course_code" 
+		value="<?php echo wp_specialchars(stripslashes($code), 1); ?>" />
+<?php
+}
+
+function instructor_meta_box() { 
+	global $post;
+	$name = get_post_meta($post->ID, '_instructor_name', true);
+	$email = get_post_meta($post->ID, '_instructor_email', true); 
+	if ( function_exists('wp_nonce_field') ) wp_nonce_field('instructor_nonce', '_instructor_nonce');
+?> 
+	<label for="_instructor_name">Name</label> 
+	<input type="text" name="_instructor_name" 
+		value="<?php echo wp_specialchars(stripslashes($name), 1); ?>" />
+	<label for="_instructor_email">Email</label> 
+	<input type="text" name="_instructor_email" 
+		value="<?php echo wp_specialchars(stripslashes($email), 1); ?>" />
+<?php
+}
+
+
+Listing 12-24. Saving the meta box fields
+
+add_action( 'save_post', 'save_course_meta_data' );
+
+function save_course_meta_data( $post_id ) {
+	global $post;
+
+	// ignore autosaves
+	if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return $post_id;
+
+	// check nonces
+	check_admin_referer('course_code_nonce', '_course_code_nonce');
+	check_admin_referer('instructor_nonce', '_instructor_nonce');
+	
+	// check capabilites
+	if ( 'course' == $_POST['post_type'] && !current_user_can( 'edit_post', $post_id ) )
+		return $post_id;
+			
+	// save the custom fields, one by one
+
+// course code field
+// if the field is empty...
+	if (empty($_POST['_course_code'])) {
+		// see what the original value was
+		$storedcode = get_post_meta( $post_id, '_course_code', true );
+		// remove it from the database
+		delete_post_meta($post_id, '_course_code', $storedcode);
+	}
+// if the field isn’t empty, we need to save it
+	else 
+		update_post_meta($post_id, '_course_code', $_POST['_course_code']);
+	
+// instructor name field
+	if (empty($_POST['_instructor_name'])) {
+		$storedname = get_post_meta( $post_id, '_instructor_name', true );
+		delete_post_meta($post_id, '_instructor_name', $storedname);
+	}
+	else 
+		update_post_meta($post_id, '_instructor_name', $_POST['_instructor_name']);
+	
+// instructor email field
+	if (empty($_POST['_instructor_email'])) {
+		$storedemail = get_post_meta( $post_id, '_instructor_email', true );
+		delete_post_meta($post_id, '_instructor_email', $storedemail);
+	}
+	else 
+		update_post_meta($post_id, '_instructor_email', $_POST['_instructor_email']);
+}
+
+
+
+// Listing 12-25. The complete Course Post Types plugin
+
+<?php
+/*
+Plugin Name: Course Post Types
+*/
+
+/* Content Types */
+
+add_action('init', 'post_type_courses');
+
+function post_type_courses() {
+	register_post_type(
+		'course', 
+		array(
+			'labels' => array(
+				'name' => __( 'Courses' ),
+				'singular_name' => __( 'Course' ),
+			),
+			'description' => __('Individual course data'),
+		        'public' => true, 
+		        'show_ui' => true,
+			'register_meta_box_cb' => 'course_meta_boxes',
+		        'supports' => array(
+				'title',
+				'editor',
+				'author',
+		                ‘excerpt’,
+		                'custom-fields',
+		                'revisions',)
+		           ) 
+		 );
+	register_taxonomy_for_object_type('college', 'course');
+}
+
+/* Taxonomies */
+
+add_action('init', 'create_course_series_tax');
+register_activation_hook( __FILE__, 'activate_course_series_tax' );
+ 
+function activate_course_series_tax() {
+	create_course_series_tax();
+	$GLOBALS['wp_rewrite']->flush_rules();
+}
+
+function create_course_series_tax() {
+		register_taxonomy(
+		'college',
+		'course',
+		array(
+			'labels' => array(
+				'name' => __( 'Colleges' ),
+				'singular_name' => __( 'College' ),
+			),
+			'hierarchical' => true,
+		)
+	);
+}
+
+/* Custom Fields */
+
+add_action( 'save_post', 'save_course_meta_data' );
+
+function course_meta_boxes() {
+	add_meta_box( 'course_code_meta', __('Course Code'), 'course_code_meta_box', 'course', 'normal', 'high' );
+	add_meta_box( 'instructor_meta', __('Instructor'), 'instructor_meta_box', 'course', 'normal', 'high' );
+}
+
+function course_code_meta_box() {
+	global $post; 
+	if ( function_exists('wp_nonce_field') ) wp_nonce_field('course_code_nonce', '_course_code_nonce'); 
+?>
+	<label for="_course_code">Course Code (e.g. ENGL 101)</label> 
+	<input type="text" name="_course_code" 
+		value="<?php echo wp_specialchars(stripslashes(get_post_meta($post->ID, '_course_code', true)), 1); ?>" />
+<?php
+}
+
+function instructor_meta_box() { 
+	global $post; 
+	if ( function_exists('wp_nonce_field') ) wp_nonce_field('instructor_nonce', '_instructor_nonce'); 
+?> 
+	<label for="_instructor_name">Name</label> 
+	<input type="text" name="_instructor_name" 
+		value="<?php echo wp_specialchars(stripslashes(get_post_meta($post->ID, '_instructor_name', true)), 1); ?>" />
+	<label for="_instructor_email">Email</label> 
+	<input type="text" name="_instructor_email" 
+		value="<?php echo wp_specialchars(stripslashes(get_post_meta($post->ID, '_instructor_email', true)), 1); ?>" />
+<?php
+}
+
+function save_course_meta_data( $post_id ) {
+	global $post;
+
+	// ignore autosaves
+	if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return $post_id;
+
+	// check nonces
+	check_admin_referer('course_code_nonce', '_course_code_nonce');
+	check_admin_referer('instructor_nonce', '_instructor_nonce');
+	
+	// check capabilites
+	if ( 'course' == $_POST['post_type'] && !current_user_can( 'edit_post', $post_id ) )
+		return $post_id;
+			
+	// save fields
+	if (empty($_POST['_course_code'])) {
+		$storedcode = get_post_meta( $post_id, '_course_code', true );
+		delete_post_meta($post_id, '_course_code', $storedcode);
+	}
+	else 
+		update_post_meta($post_id, '_course_code', $_POST['_course_code']);
+	
+	if (empty($_POST['_instructor_name'])) {
+		$storedname = get_post_meta( $post_id, '_instructor_name', true );
+		delete_post_meta($post_id, '_instructor_name', $storedname);
+	}
+	else 
+		update_post_meta($post_id, '_instructor_name', $_POST['_instructor_name']);
+	
+	if (empty($_POST['_instructor_email'])) {
+		$storedemail = get_post_meta( $post_id, '_instructor_email', true );
+		delete_post_meta($post_id, '_instructor_email', $storedemail);
+	}
+	else 
+		update_post_meta($post_id, '_instructor_email', $_POST['_instructor_email']);
+}
+
+/* Custom Edit Columns */
+
+add_filter("manage_edit-course_columns", "course_taxonomy_columns");
+
+// rearrange the columns on the Edit screens
+function course_taxonomy_columns($defaults) {
+	// preserve the default date and comment columns
+	$comments = $defaults['comments'];
+	$date = $defaults['date'];
+
+	// remove default date and comments
+	unset($defaults['comments']);
+	unset($defaults['date']);
+
+	// insert college taxonomy column
+    	$defaults['colleges'] = __('Colleges');
+
+	// restore default date and comments
+	$defaults['comments'] = $comments;
+	$defaults['date'] = $date;
+
+return $defaults;
+}
+
+add_action("manage_pages_custom_column", "course_taxonomy_custom_column");
+// for non-hierarchical content types, use the following instead:
+// add_action("manage_posts_custom_column", "course_taxonomy_custom_column");
+
+// print the college taxonomy terms, linked to filter the posts to this taxonomy term only
+function course_taxonomy_custom_column($column) {
+	global $post;
+	if ($column == 'colleges') {
+		$colleges = get_the_terms($post->ID, 'college'); 
+		if (!empty($colleges)) {
+			$thecolleges = array();
+			foreach ($colleges as $college) {
+				$thecolleges[] = '<a href="edit.php?post_type=course&college='.$college->slug.'>' . esc_html(sanitize_term_field('name', $college->name, $college->term_id, 'college', 'display')) . "</a>";
+			}
+			echo implode(', ', $thecolleges);
+		}
+	} 
+}
+?>
+
+
+// Listing 12-26. The new course archive template using custom fields
+<?php get_header(); ?>
+
+<div id="container">
+	<div id="content">
+  
+<?php if ($wp_query->have_posts() ) : ?>
+	<table>
+		<thead>
+			<th>Code</th>
+			<th>Title</th>
+			<th>Instructor</th>
+		<thead>
+		<tbody>
+<?php
+	while (have_posts() ) : the_post(); ?>
+	<tr id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+		<td><?php echo get_post_meta($post->ID, '_course_code', true); ?></td>
+		<td><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a></td>
+		<td><a href="mailto:<?php echo get_post_meta($post->ID, '_instructor_email', true); ?>"><?php echo get_post_meta($post->ID, '_instructor_name', true); ?></a></td>
+	</tr>
+<?php endwhile; ?>
+		</tbody>
+	</table>
+<?php endif; ?>
+
+	</div><!-- #content -->
+</div><!-- #container -->
+
+<?php get_sidebar(); ?>
+<?php get_footer(); ?>

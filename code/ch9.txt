@@ -1,0 +1,993 @@
+// Listing 9-1. The Next Page plugin header comment block
+
+<?php
+/*
+Plugin Name: Next Page
+Plugin URI: http://sillybean.net/code/wordpress/next-page/
+Description: Provides shortcodes and template tags for next/previous navigation in pages. 
+Version: 1.0
+License: GPLv2
+Author: Stephanie Leary
+Author URI: http://sillybean.net/
+*/
+?>
+
+
+// Listing 9-2. A simple template tag
+
+function today() {
+	$format = get_option('date_format');
+	echo date($format);
+}
+
+
+// Listing 9-3. A today() template tag with arguments
+
+function today($args = '') {
+	$defaults = array('format' => get_option('date_format'), 'before' => '');
+	$args = wp_parse_args($args, $defaults); 
+	echo $args['before'] .' '. date($args['format']);
+}
+
+
+// Listing 9-4. Using the new today() template tag
+
+<h3>
+<?php 
+// arguments as a string
+today('format=l, M j, Y&before=Today is:');
+
+// array would work too
+// today(array('format' => 'l, M j, Y', 'before' => 'Today is:'));
+?>
+</h3>
+
+
+// Listing 9-5. The three Next Page template tag functions
+
+// next_link tag
+function next_link() {
+	global $post;
+// exclude page IDs 1, 2, and 3
+	$exclude = array(1,2,3);
+	$pagelist = next_page_flatten_page_list($exclude);
+	$current = array_search($post->ID, $pagelist);
+	$nextID = $pagelist[$current+1];
+	
+	$linkurl = get_permalink($nextID);
+	$title = get_the_title($nextID);
+	$after_link = '&rarr;';
+	
+	$link = '<a href="' . $linkurl . '">' . $title . '</a>' . $after_link;
+	echo $link;
+} 
+
+// previous_link tag
+
+function previous_link() {
+	global $post;
+// exclude page IDs 1, 2, and 3
+	$exclude = array(1,2,3);
+	$pagelist = next_page_flatten_page_list($exclude);
+	$current = array_search($post->ID, $pagelist);
+	$prevID = $pagelist[$current-1];
+	
+	$before_link = '&larr;';
+	$linkurl = get_permalink($prevID);
+	$title = get_the_title($prevID);
+	
+	$link = $before_link . '<a href="' . $linkurl . '">' . $title . '</a>';
+	echo $link;
+} 
+
+// parent_link tag
+function parent_link() {
+	global $post;
+	$parentID = $post->post_parent;
+	
+// exclude page IDs 1, 2, and 3
+	$exclude = array(1,2,3);
+	if (in_array($parentID, $exclude)) return false;
+	else {
+		$linkurl = get_permalink($parentID);
+		$title = get_the_title($parentID);
+		
+		$link = '<a href="' . $linkurl . '">' . $title . '</a>';
+		echo $link;
+	}
+}
+
+// utility function
+function next_page_flatten_page_list($exclude = '') {
+	$args = 'sort_column=menu_order&sort_order=asc';
+	if (!empty($exclude)) $args .= '&exclude='.$exclude;
+	$pagelist = get_pages($args);
+	$mypages = array();
+	foreach ($pagelist as $thispage) {
+	   $mypages[] = $thispage->ID;
+	}
+	return $mypages;
+}
+
+
+// Listing 9-6. Using option variables
+
+// next_link tag
+function next_link() {
+	global $post;
+	$options = get_option('next_page');
+	$exclude = $options['exclude'];
+	$pagelist = next_page_flatten_page_list($exclude);
+	$current = array_search($post->ID, $pagelist);
+	$nextID = $pagelist[$current+1];
+	
+	$before_link = stripslashes($options['before_next_link']);
+	$linkurl = get_permalink($nextID);
+	$title = get_the_title($nextID);
+	$linktext = $options['next_link_text'];
+	if (strpos($linktext, '%title%') !== false) 
+		$linktext = str_replace('%title%', $title, $linktext);
+	$after_link = stripslashes($options['after_next_link']);
+	
+	$link = $before_link . '<a href="' . $linkurl . '" title="' . $title . '">' . $linktext . '</a>' . $after_link;
+	echo $link;
+} 
+
+// previous_link tag
+function previous_link() {
+	global $post;
+	$options = get_option('next_page');
+	$exclude = $options['exclude'];
+	$pagelist = next_page_flatten_page_list($exclude);
+	$current = array_search($post->ID, $pagelist);
+	$prevID = $pagelist[$current-1];
+	
+	$before_link = stripslashes($options['before_prev_link']);
+	$linkurl = get_permalink($prevID);
+	$title = get_the_title($prevID);
+	$linktext = $options['prev_link_text'];
+	if (strpos($linktext, '%title%') !== false) 
+		$linktext = str_replace('%title%', $title, $linktext);
+	$after_link = stripslashes($options['after_prev_link']);
+	
+	$link = $before_link . '<a href="' . $linkurl . '" title="' . $title . '">' . $linktext . '</a>' . $after_link;
+	echo $link;
+} 
+
+// parent_link tag
+function parent_link() {
+	global $post;
+	$options = get_option('next_page');
+	$parentID = $post->post_parent;
+	
+	$exclude = array($options['exclude']);
+	if (in_array($parentID, $exclude)) return false;
+	else {
+		$before_link = stripslashes($options['before_parent_link']);
+		$linkurl = get_permalink($parentID);
+		$title = get_the_title($parentID);
+		$linktext = $options['parent_link_text'];
+		if (strpos($linktext, '%title%') !== false) 
+			$linktext = str_replace('%title%', $title, $linktext);
+		$after_link = stripslashes($options['after_parent_link']);
+		
+		$link = $before_link . '<a href="' . $linkurl . '" title="' . $title . '">' . $linktext . '</a>' . $after_link;
+		echo $link;
+	}
+}
+
+// utility function
+function next_page_flatten_page_list($exclude = '') {
+	$args = 'sort_column=menu_order&sort_order=asc';
+	if (!empty($exclude)) $args .= '&exclude='.$exclude;
+	$pagelist = get_pages($args);
+	$mypages = array();
+	foreach ($pagelist as $thispage) {
+	   $mypages[] = $thispage->ID;
+	}
+	return $mypages;
+}
+
+
+// Listing 9-7. An empty options page
+
+// Add a new submenu under Options:
+add_action('admin_menu', 'next_page_add_pages');
+
+function next_page_add_pages() {
+	add_options_page('Next Page', 'Next Page', 'manage_options', 'next-page', 'next_page_options');
+}
+
+// displays the options page content
+function next_page_options() { ?>	
+<div class="wrap">
+<form method="post" id="next_page_form" action="options.php">
+    <h2>Next Page Options</h2>
+
+<p> the form fields will go here </p>
+
+	<p class="submit">
+	<input type="submit" name="submit" class="button-primary" value="Update Options" />
+	</p>
+</form>
+</div>
+<?php 
+} // end function next_page_options()
+
+
+// Listing 9-8. Registering a setting
+
+function register_next_page_options() {
+	register_setting( 'next_page', 'next_page' );
+}
+add_action('admin_init', 'register_next_page_options' );
+
+
+// Listing 9-9. Setting default options on activation
+
+function next_page_activation() {	
+	// set defaults
+	$options = array();
+	$options['before_prev_link'] = '<div class="alignleft">';
+	$options['prev_link_text'] = __('Previous:', 'next-page').' %title%';
+	$options['after_prev_link'] = '</div>';
+	
+	$options['before_parent_link'] = '<div class="aligncenter">';
+	$options['parent_link_text'] = __('Up one level:', 'next-page').' %title%';
+	$options['after_parent_link'] = '</div>';
+	
+	$options['before_next_link'] = '<div class="alignright">';
+	$options['next_link_text'] = __('Next:', 'next-page').' %title%';
+	$options['after_next_link'] = '</div>';
+	
+	$options['exclude'] = '';
+	
+	// set new option
+	add_option('next_page', $options, '', 'yes');
+}
+register_activation_hook(__FILE__, 'next_page_activation');
+
+
+// Listing 9-10. Setting up options for use in the form
+ 
+// displays the options page content
+function next_page_options() { ?>	
+<div class="wrap">
+<form method="post" id="next_page_form" action="options.php">
+<?php 
+   settings_fields('next_page');
+   $options = get_option('next_page'); 
+?>
+    <h2>Next Page Options</h2>
+
+<-- the form fields will go here -->
+
+	<p class="submit">
+	<input type="submit" name="submit" class="button-primary" value="Update Options" />
+	</p>
+</form>
+</div>
+<?php 
+} // end function next_page_options()
+
+
+
+// Listing 9-11. Adding the options fields
+
+// displays the options page content
+function next_page_options() { ?>	
+<div class="wrap">
+<form method="post" id="next_page_form" action="options.php">
+<?php 
+settings_fields('next_page');
+$options = get_option('next_page'); 
+?>
+    <h2>Next Page Options</h2>
+
+<-- the form fields go here -->
+
+<p><label>Exclude pages:<br />
+    	<input type="text" name="next_page[exclude]" id="exclude" 
+		value="<?php echo $options['exclude']; ?>" /><br />
+	<small>Enter page IDs separated by commas.</small></label></p>
+       
+<div id="previous-page">
+    <h3>Previous Page Display:</h3>
+    <p><label>Before previous page link: "<br />
+    <input type="text" name="next_page[before_prev_link]" id="before_prev_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_prev_link'])); ?>" />  </label></p>
+    
+    <p><label>Previous page link text: <small>Use %title% for the page title</small><br />
+    <input type="text" name="next_page[prev_link_text]" id="prev_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['prev_link_text'])); ?>" />  </label></p>
+    
+    <p><label>After previous page link:<br />
+    <input type="text" name="next_page[after_prev_link]" id="after_prev_link" 
+	value="<?php echo stripslashes(htmlentities($options['after_prev_link'])); ?>" />  </label></p>
+    <p>Shortcode: <strong>[previous]</strong><br />
+    Template tag: <strong>&lt;?php previous_link(); ?&gt;</strong></p>
+</div>
+    
+<div id="parent-page">
+    <h3>Parent Page Display:</h3>
+    <p><label>Before parent page link:<br />
+    <input type="text" name="next_page[before_parent_link]" id="before_parent_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_parent_link'])); ?>" />  </label></p>
+    
+    <p><label>Parent page link text: <small>Use %title% for the page title</small><br />
+    <input type="text" name="next_page[parent_link_text]" id="parent_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['parent_link_text'])); ?>" />  </label></p>
+    
+    <p><label>After parent page link:<br />
+    <input type="text" name="next_page[after_parent_link]" id="after_parent_link" 
+		value="<?php echo stripslashes(htmlentities($options['after_parent_link'])); ?>" />  </label></p>
+    <p>Shortcode: <strong>[parent]</strong><br />
+    Template tag: <strong>&lt;?php parent_link(); ?&gt;</strong></p>
+</div>
+    
+<div id="next-page">
+    <h3>Next Page Display:</h3>
+    <p><label>Before next page link:<br />
+    <input type="text" name="next_page[before_next_link]" id="before_next_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_next_link'])); ?>" />  </label></p>
+    
+    <p><label>Next page link text: <small>Use %title% for the page title</small><br />
+    <input type="text" name="next_page[next_link_text]" id="next_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['next_link_text'])); ?>" />  </label></p>
+    
+    <p><label>After next page link:<br />
+    <input type="text" name="next_page[after_next_link]" id="after_next_link" 
+		value="<?php echo stripslashes(htmlentities($options['after_next_link'])); ?>" />  </label></p>
+    <p>Shortcode: <strong>[next]</strong><br />
+    Template tag: <strong>&lt;?php next_link(); ?&gt;</strong></p>
+</div>
+
+<!-- end form fields -->
+
+	<p class="submit">
+	<input type="submit" name="submit" class="button-primary" value="Update Options" />
+	</p>
+</form>
+</div> <!-- .wrap -->
+<?php 
+} // end function next_page_options()
+
+
+// Listing 9-12. Adding a stylesheet to this options page, not all the admin screens
+
+function next_page_add_pages() {
+    // Add a new submenu under Options:
+	$file = add_options_page('Next Page', 'Next Page', 'manage_options', 'next-page', 'next_page_options');
+	add_action("admin_head-$file", 'next_page_css');
+}
+
+function next_page_css() { ?>
+<style type="text/css">
+#next-page, #parent-page, #previous-page { float: left; width: 30%; margin-right: 5%; }
+#next-page { margin-right: 0; }
+</style>
+<?php 
+}
+
+
+// Listing 9-13. Updating an option manually
+
+function change_options() {
+	$options = get_option('my_option');
+// do something with $options here
+	update_option('my_option', $options);
+}
+
+
+// Listing 9-14. Processing options in Dashboard Notepad (partial)
+
+function dashboard_notepad_widget_control() {
+	$options = dashboard_notepad_widget_options();
+	if ( 'post' == strtolower($_SERVER['REQUEST_METHOD']) && isset( $_POST['widget_id'] ) && 'dashboard_notepad_widget_id' == $_POST['widget_id'] ) {
+		if ( isset($_POST['can_edit']) )
+			$options['can_edit'] = $_POST['can_edit'];
+		if ( isset($_POST['can_read']) )
+			$options['can_read'] = $_POST['can_read'];
+		if ( isset($_POST['notepad_title']) )
+			$options['notepad_title'] = $_POST['notepad_title'];
+		$options['autop'] = $_POST['autop'];
+		update_option( 'dashboard_notepad', $options );
+	}
+// <form> ... </form> goes here
+}
+
+
+// Listing 9-15. Removing the Next Page plugin options on uninstall
+
+// when uninstalled, remove option
+register_uninstall_hook( __FILE__, 'next_page_delete_options' );
+
+function next_page_delete_options() {
+	delete_option('next_page');
+}
+
+
+// Listing 9-16. The complete Next Page plugin
+
+<?php
+/*
+Plugin Name: Next Page
+Plugin URI: http://sillybean.net/code/wordpress/next-page/
+Description: Provides shortcodes and template tags for next/previous navigation in pages. 
+Version: 1.4
+License: GPLv2
+Author: Stephanie Leary
+Author URI: http://sillybean.net/
+*/
+
+add_action('admin_menu', 'next_page_add_pages');
+
+register_activation_hook(__FILE__, 'next_page_activation');
+function next_page_activation() {
+	// set defaults
+	$options = array();
+	$options['before_prev_link'] = '<div class="alignleft">';
+	$options['prev_link_text'] = __('Previous:', 'next-page').' %title%';
+	$options['after_prev_link'] = '</div>';
+	
+	$options['before_parent_link'] = '<div class="aligncenter">';
+	$options['parent_link_text'] = __('Up one level:', 'next-page').' %title%';
+	$options['after_parent_link'] = '</div>';
+	
+	$options['before_next_link'] = '<div class="alignright">';
+	$options['next_link_text'] = __('Next:', 'next-page').' %title%';
+	$options['after_next_link'] = '</div>';
+	
+	$options['exclude'] = '';
+	
+	// set new option
+	add_option('next_page', array_merge($oldoptions, $options), '', 'yes');
+}
+
+// when uninstalled, remove option
+register_uninstall_hook( __FILE__, 'next_page_delete_options' );
+
+function next_page_delete_options() {
+	delete_option('next_page');
+}
+
+// i18n
+if (!defined('WP_PLUGIN_DIR'))
+	define('WP_PLUGIN_DIR', dirname(dirname(__FILE__))); 
+$lang_dir = basename(dirname(__FILE__)). '/languages';
+load_plugin_textdomain( 'next_page', 'WP_PLUGIN_DIR'.$lang_dir, $lang_dir );
+
+
+add_action('admin_init', 'register_next_page_options' );
+function register_next_page_options(){
+	register_setting( 'next_page', 'next_page' );
+}
+
+function next_page_add_pages() {
+    // Add a new submenu under Options:
+	$css = add_options_page('Next Page', 'Next Page', 'manage_options', 'next-page', 'next_page_options');
+	add_action("admin_head-$css", 'next_page_css');
+}
+
+function next_page_css() { ?>
+<style type="text/css">
+#next-page, #parent-page, #previous-page { float: left; width: 30%; margin-right: 5%; }
+#next-page { margin-right: 0; }
+</style>
+<?php 
+}
+
+// displays the options page content
+function next_page_options() { ?>	
+    <div class="wrap">
+	<form method="post" id="next_page_form" action="options.php">
+		<?php settings_fields('next_page');
+		$options = get_option('next_page'); ?>
+
+    <h2><?php _e( 'Next Page Options', 'next-page'); ?></h2>
+    
+    <p><label><?php _e("Exclude pages: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[exclude]" id="exclude" 
+		value="<?php echo $options['exclude']; ?>" /><br />
+	<small><?php _e("Enter page IDs separated by commas.", 'next-page'); ?></small></label></p>
+       
+    <div id="previous-page">
+    <h3><?php _e("Previous Page Display:", 'next-page'); ?></h3>
+    <p><label><?php _e("Before previous page link: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[before_prev_link]" id="before_prev_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_prev_link'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("Previous page link text: <small>Use %title% for the page title</small>", 'next-page'); ?><br />
+    <input type="text" name="next_page[prev_link_text]" id="prev_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['prev_link_text'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("After previous page link: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[after_prev_link]" id="after_prev_link" 
+	value="<?php echo stripslashes(htmlentities($options['after_prev_link'])); ?>" />  </label></p>
+    <p><?php _e('Shortcode:'); ?> <strong>[previous]</strong><br />
+    <?php _e('Template tag:'); ?> <strong>&lt;?php previous_link(); ?&gt;</strong></p>
+    </div>
+    
+    <div id="parent-page">
+    <h3><?php _e("Parent Page Display:", 'next-page'); ?></h3>
+    <p><label><?php _e("Before parent page link: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[before_parent_link]" id="before_parent_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_parent_link'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("Parent page link text: <small>Use %title% for the page title</small>", 'next-page'); ?><br />
+    <input type="text" name="next_page[parent_link_text]" id="parent_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['parent_link_text'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("After parent page link: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[after_parent_link]" id="after_parent_link" 
+		value="<?php echo stripslashes(htmlentities($options['after_parent_link'])); ?>" />  </label></p>
+    <p><?php _e('Shortcode:'); ?> <strong>[parent]</strong><br />
+    <?php _e('Template tag:'); ?> <strong>&lt;?php parent_link(); ?&gt;</strong></p>
+    </div>
+    
+    <div id="next-page">
+    <h3><?php _e("Next Page Display:", 'next-page'); ?></h3>
+    <p><label><?php _e("Before next page link: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[before_next_link]" id="before_next_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_next_link'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("Next page link text: <small>Use %title% for the page title</small>", 'next-page'); ?><br />
+    <input type="text" name="next_page[next_link_text]" id="next_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['next_link_text'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("After next page link: ", 'next-page'); ?><br />
+    <input type="text" name="next_page[after_next_link]" id="after_next_link" 
+		value="<?php echo stripslashes(htmlentities($options['after_next_link'])); ?>" />  </label></p>
+    <p><?php _e('Shortcode:'); ?> <strong>[next]</strong><br />
+    <?php _e('Template tag:'); ?> <strong>&lt;?php next_link(); ?&gt;</strong></p>
+    </div>
+    
+	<p class="submit">
+	<input type="submit" name="submit" class="button-primary" value="<?php _e('Update Options', 'next-page'); ?>" />
+	</p>
+	</form>
+	</div>
+<?php 
+} // end function next_page_options() 
+
+// make the magic happen
+function next_page_flatten_page_list($exclude = '') {
+	$args = 'sort_column=menu_order&sort_order=asc';
+	if (!empty($exclude)) $args .= '&exclude='.$exclude;
+	$pagelist = get_pages($args);
+	$mypages = array();
+	foreach ($pagelist as $thispage) {
+	   $mypages[] = $thispage->ID;
+	}
+	return $mypages;
+}
+
+function next_link() {
+	global $post;
+	$options = get_option('next_page');
+	$exclude = $options['exclude'];
+	$pagelist = next_page_flatten_page_list($exclude);
+	$current = array_search($post->ID, $pagelist);
+	$nextID = $pagelist[$current+1];
+	
+	$before_link = stripslashes($options['before_next_link']);
+	$linkurl = get_permalink($nextID);
+	$title = get_the_title($nextID);
+	$linktext = $options['next_link_text'];
+	if (strpos($linktext, '%title%') !== false) 
+		$linktext = str_replace('%title%', $title, $linktext);
+	$after_link = stripslashes($options['after_next_link']);
+	
+	$link = $before_link . '<a href="' . $linkurl . '" title="' . $title . '">' . $linktext . '</a>' . $after_link;
+	echo $link;
+} 
+
+function previous_link() {
+	global $post;
+	$options = get_option('next_page');
+	$exclude = $options['exclude'];
+	$pagelist = next_page_flatten_page_list($exclude);
+	$current = array_search($post->ID, $pagelist);
+	$prevID = $pagelist[$current-1];
+	
+	$before_link = stripslashes($options['before_prev_link']);
+	$linkurl = get_permalink($prevID);
+	$title = get_the_title($prevID);
+	$linktext = $options['prev_link_text'];
+	if (strpos($linktext, '%title%') !== false) 
+		$linktext = str_replace('%title%', $title, $linktext);
+	$after_link = stripslashes($options['after_prev_link']);
+	
+	$link = $before_link . '<a href="' . $linkurl . '" title="' . $title . '">' . $linktext . '</a>' . $after_link;
+	echo $link;
+} 
+
+function parent_link() {
+	global $post;
+	$options = get_option('next_page');
+	$parentID = $post->post_parent;
+	
+	$exclude = array($options['exclude']);
+	if (in_array($parentID, $exclude)) return false;
+	else {
+		$before_link = stripslashes($options['before_parent_link']);
+		$linkurl = get_permalink($parentID);
+		$title = get_the_title($parentID);
+		$linktext = $options['parent_link_text'];
+		if (strpos($linktext, '%title%') !== false) 
+			$linktext = str_replace('%title%', $title, $linktext);
+		$after_link = stripslashes($options['after_parent_link']);
+		
+		$link = $before_link . '<a href="' . $linkurl . '" title="' . $title . '">' . $linktext . '</a>' . $after_link;
+		echo $link;
+	}
+}
+?>
+
+
+
+// Listing 9-17. Creating the three Next Page shortcodes
+
+add_shortcode('previous', 'previous_link');
+add_shortcode('next', 'next_link');
+add_shortcode('parent', 'parent_link');
+
+// Listing 9-18. The Simple Internal Links shortcodes
+
+/*
+// creates a link to post/page ID 6180 and uses its title as the linked text 
+[link id="6180"] 	
+
+// uses the given text instead of the post/page title
+[link id="6180"]link text[/link] 
+
+// links to post/page using the slug instead of the ID
+[link name="post-slug"] 		
+[link name="post-slug"]link text[/link]
+
+// links to post/page using the title 	
+[link title="About Us"]
+[link title="About Us"]link text[/link] 
+
+// links to a category by slug
+[link cat="cat-slug"] 				
+[link cat="cat-slug"]link text[/link]
+
+// links to a tag by slug
+[link tag="tag-slug"]				
+[link tag="tag-slug"]link text[/link]
+/**/
+
+
+// Listing 9-19. Simple Internal Links shortcodes
+function create_anylink($atts, $content = null) {
+	//extract page id from the shortcode attributes
+	extract(shortcode_atts(array( 'id' => 0, 'name' => null, 'cat' => null, 'tag' => null ), $atts));
+	$link = '';
+	
+	// do categories first
+	if (!empty($cat)) {
+		$catobj = get_category_by_slug($cat); 
+		$link = get_category_link($catobj->term_id);
+		if (empty($content)) $content = get_cat_name($catobj->term_id);
+	}
+	// then tags
+	elseif (!empty($tag)) {
+		$tagobj = get_term_by( 'slug', $tag, 'post_tag' );
+		$link = get_tag_link($tagobj->term_id);
+		if (empty($content)) $content = $tagobj->name;
+	}
+	elseif (!empty($title)) {
+		$thepost = get_page_by_title($title);
+		if (!$thepost) {  // there is no get_post_by_title, so we'll sanitize and try it as a slug
+			global $wpdb;
+			$id = $id = $wpdb->get_var( $wpdb->prepare( 
+					"SELECT ID FROM $wpdb->posts WHERE post_name = %s AND (post_type = 'post' OR post_type = 'page') ", sanitize_title($title) ));
+			$thepost = get_post($id);
+		}
+		if (empty($content)) {
+			$thepost = get_post( $id ); // will get all post types
+			$content = $thepost->post_title;
+		}
+		$link = get_permalink($id);
+	}	
+	else { 
+		// if no ID, get post/page by name or title		
+		if (empty($id)) {
+		   global $wpdb;
+		   $id = $wpdb->get_var( $wpdb->prepare( 
+				"SELECT ID FROM $wpdb->posts WHERE post_name = %s AND (post_type = 'post' OR post_type = 'page') ", $name ));
+		}
+		
+		// use $content for the title if it exists; otherwise fetch page/post title
+		if (empty($content)) {
+			$thepost = get_post( $id ); // will get all post types
+			$content = $thepost->post_title;
+		}
+		$link = get_permalink($id);
+	}
+	
+	if (!empty($link))
+		return '<a href="'.$link.'">'.$content.'</a>';
+	else
+		return $content; // no cat, ID, or name provided; ignore this shortcode 
+}
+add_shortcode('link', 'create_anylink');
+
+
+// Listing 9-20. An editorial comment shortcode
+
+// Usage: [ed]this is a note only editors can read.[/ed]
+
+function editorial_note($content = null) {
+    if (current_user_can('edit_pages') && is_single())
+        return '<span class="private">'.$content.'</span>';
+    else return '';
+}
+add_shortcode( 'ed', 'editorial_note' );
+
+
+// Listing 9-21. Adding private pages to the page lists and nav menus
+
+function private_suite_add_menu($pagelist) {
+	if (current_user_can('read_private_pages')) {
+		global $wpdb;
+		$list = '';
+		$pageresults = $wpdb->get_results(wpdb_prepare("SELECT id, post_title, post_parent FROM $wpdb->posts WHERE post_status=%s AND post_type=%s" ,'private','page'));	
+		foreach ($pageresults as $privatepage) {
+				$list .= '<li class="page_item private"><a href="'.get_permalink($privatepage->id).'" title="'.esc_attr($privatepage->post_title).'">'
+					.$privatepage->post_title.'</a></li>';
+		}
+		return $pagelist.$list; 
+	}
+	else return $pagelist;
+}
+add_filter('wp_list_pages', 'private_suite_add_menu');
+add_filter('nav_menu', 'private_suite_add_menu');
+
+
+// Listing 9-22. Creating private categories
+
+function set_private_categories($postid) {
+	if ($parent_id = wp_is_post_revision($postid)) 
+		$postid = $parent_id;
+	$privatecats = get_option('private_categories'); // array of category IDs
+	if (!is_array($privatecats)) 
+		$privatecats = array($privatecats);
+	foreach ($privatecats as $cat) {
+		if (in_category($cat, $postid)) {
+			$updated = array();
+			$updated['ID'] = $postid;
+			$updated['post_status'] = 'private';
+wp_update_post($updated);
+		}
+	}
+}
+add_action('save_post', 'set_private_categories');
+
+
+// Listing 9-23. Appending an author name to the post content using a filter
+
+function post_signature($content) {
+	global $post;	
+	$author_id = $post->post_author;
+	$author = get_userdata($author_id);
+	$name = '<p>'.$author->display_name.'</p>';	
+	return $content.name;
+}
+add_filter('the_content','post_signature');
+
+
+// Listing 9-24. Appending child pages using a filter
+
+function append_child_pages($content) {
+	if (is_page()) {
+		global $post;
+		$children = '<ul>'.wp_list_pages('title_li=&child_of'=$post->ID).'</ul>';
+	}	
+	return $content.$children;
+}
+add_filter('the_content','append_child_pages');
+
+
+// Listing 9-25. Appending child pages only if the parent page is empty
+
+function append_child_pages($content) {
+	if (is_page() && (empty($content))) {
+		global $post;
+		$children = '<ul>'.wp_list_pages('title_li=&child_of'=$post->ID).'</ul>';
+	}	
+	return $content.$children;
+}
+add_filter('the_content','append_child_pages');
+
+
+
+// Listing 9-26. Removing the “Private” prefix from private pages
+
+function custom_private_title($title) {
+	return str_replace(__("Private: "), 'Members Only: ', $title);
+}
+add_filter('private_title_format', 'custom_private_title');
+
+
+// Listing 9-27. Submenu functions
+
+//Settings
+add_options_page (page_title, menu_title, capability, handle); 
+// Tools
+add_management_page (page_title, menu_title, capability, handle);
+// Appearance
+add_theme_page (page_title, menu_title, capability, handle);
+// Posts
+add_posts_page (page_title, menu_title, capability, handle);
+// Pages
+add_pages_page (page_title, menu_title, capability, handle);
+// Users
+add_users_page (page_title, menu_title, capability, handle);
+
+
+// Listing 9-28. Adding a top-level menu item
+
+add_action('admin_menu', 'next_page_add_pages');
+
+function next_page_add_pages() {
+	add_menu_page('Next Page Options', 'Next Page', 'manage_options', __FILE__, 'next_page_options');
+}
+
+
+// Listing 9-29. Adding an option to the Privacy page
+
+function add_extra_privacy_options() {
+    add_settings_field('extra_privacy', 'Extra Privacy Option', 'extra_privacy_options', 'privacy', $section = 'default', $args = array());
+    register_setting('privacy','extra_privacy');
+}
+
+add_action('admin_init', 'add_extra_privacy_options');
+
+// displays the options page content
+function extra_privacy_options() { ?>	
+	<p> the form fields will go here </p>
+<?php 
+}
+
+
+// Listing 9-30. A sample readme.txt file
+
+=== My Plugin ===
+
+Plugin Name: My Plugin
+Contributors: sillybean
+Plugin URI: http://example.com
+Author URI: http://example.com
+Donate link: http://example.com
+Requires at least: 2.8 
+Tested up to: 3.0
+Stable tag: 1.0
+Version: 1.0
+Tags: posts, pages
+
+== Description ==
+
+Describe your plugin here.
+
+[wpvideo fft9IGgw]
+
+== Installation ==
+
+1. Upload the plugin directory to `/wp-content/plugins/` 
+1. Activate the plugin through the 'Plugins' menu in WordPress
+1. Go to Settings &rarr; My Plugin to set the options
+
+== Upgrade Notice ==
+
+You should upgrade to 1.0 immediately because there was a serious bug in 0.9.
+
+== Screenshots ==
+
+1. The caption for screenshot-1.png
+1. The caption for screenshot-2.png
+
+== Changelog ==
+
+= 1.0 =
+* New feature X
+= 0.9 =
+* Beta release for testers
+
+== Frequently Asked Questions ==
+
+= Question? =
+
+Answer.
+
+= Question 2? =
+
+Answer 2.
+
+
+
+// Listing 9-31. Next Page options with translation wrappers
+function next_page_options() { ?>	
+    <div class="wrap">
+	<form method="post" id="next_page_form" action="options.php">
+		<?php settings_fields('next_page');
+		$options = get_option('next_page'); ?>
+
+    <h2><?php _e( 'Next Page Options'); ?></h2>
+    
+    <p><label><?php _e("Exclude pages: "); ?><br />
+    <input type="text" name="next_page[exclude]" id="exclude" 
+		value="<?php echo $options['exclude']; ?>" /><br />
+	<small><?php _e("Enter page IDs separated by commas."); ?></small></label></p>
+       
+    <div id="previous-page">
+    <h3><?php _e("Previous Page Display:"); ?></h3>
+    <p><label><?php _e("Before previous page link: "); ?><br />
+    <input type="text" name="next_page[before_prev_link]" id="before_prev_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_prev_link'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("Previous page link text: <small>Use %title% for the page title</small>"); ?><br />
+    <input type="text" name="next_page[prev_link_text]" id="prev_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['prev_link_text'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("After previous page link: "); ?><br />
+    <input type="text" name="next_page[after_prev_link]" id="after_prev_link" 
+	value="<?php echo stripslashes(htmlentities($options['after_prev_link'])); ?>" />  </label></p>
+    <p><?php _e('Shortcode:'); ?> <strong>[previous]</strong><br />
+    <?php _e('Template tag:'); ?> <strong>&lt;?php previous_link(); ?&gt;</strong></p>
+    </div>
+    
+    <div id="parent-page">
+    <h3><?php _e("Parent Page Display:"); ?></h3>
+    <p><label><?php _e("Before parent page link: "); ?><br />
+    <input type="text" name="next_page[before_parent_link]" id="before_parent_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_parent_link'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("Parent page link text: <small>Use %title% for the page title</small>"); ?><br />
+    <input type="text" name="next_page[parent_link_text]" id="parent_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['parent_link_text'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("After parent page link: "); ?><br />
+    <input type="text" name="next_page[after_parent_link]" id="after_parent_link" 
+		value="<?php echo stripslashes(htmlentities($options['after_parent_link'])); ?>" />  </label></p>
+    <p><?php _e('Shortcode:'); ?> <strong>[parent]</strong><br />
+    <?php _e('Template tag:'); ?> <strong>&lt;?php parent_link(); ?&gt;</strong></p>
+    </div>
+    
+    <div id="next-page">
+    <h3><?php _e("Next Page Display:"); ?></h3>
+    <p><label><?php _e("Before next page link: "); ?><br />
+    <input type="text" name="next_page[before_next_link]" id="before_next_link" 
+		value="<?php echo stripslashes(htmlentities($options['before_next_link'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("Next page link text: <small>Use %title% for the page title</small>"); ?><br />
+    <input type="text" name="next_page[next_link_text]" id="next_link_text" 
+		value="<?php echo stripslashes(htmlentities($options['next_link_text'])); ?>" />  </label></p>
+    
+    <p><label><?php _e("After next page link: "); ?><br />
+    <input type="text" name="next_page[after_next_link]" id="after_next_link" 
+		value="<?php echo stripslashes(htmlentities($options['after_next_link'])); ?>" />  </label></p>
+    <p><?php _e('Shortcode:'); ?> <strong>[next]</strong><br />
+    <?php _e('Template tag:'); ?> <strong>&lt;?php next_link(); ?&gt;</strong></p>
+    </div>
+    
+	<p class="submit">
+	<input type="submit" name="submit" class="button-primary" value="<?php _e('Update Options'); ?>" />
+	</p>
+	</form>
+	</div>
+<?php 
+} // end function next_page_options()
+
+
+
+// Listing 9-32. A gettext call with the text domain
+<?php _e("Exclude pages: ", 'next-page'); ?>
+
+
+// Listing 9-33. The i18n functions
+if (!defined('WP_PLUGIN_DIR'))
+	define('WP_PLUGIN_DIR', dirname(dirname(__FILE__))); 
+$lang_dir = basename(dirname(__FILE__)). '/languages';
+load_plugin_textdomain( 'next_page', 'WP_PLUGIN_DIR'.$lang_dir, $lang_dir );

@@ -1,0 +1,631 @@
+// Listing 6-1. Custom background styles inserted into the theme <head>
+
+<meta name="generator" content="WordPress 3.0" />
+<style type="text/css">
+body {
+	background-image:url('http://wordpress/wp-content/uploads/2010/04/bgsquare.jpg');
+	background-repeat: repeat;	background-position: top left;	background-attachment: fixed;}
+</style>
+</head>
+
+
+// Listing 6-2. A basic XHTML file
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+ 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+ <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US">
+ <head>
+     <title>My Site</title>
+     
+     <meta http-equiv="Content-Type" content="application/xhtml+xml;
+charset=utf-8" />
+     <meta name="description" content="A site about foo." />     
+     <link rel="stylesheet" href="style.css" type="text/css" />
+ </head>
+ <body>
+ <div id="header">
+   <h1>My Site</h1>
+ </div> <!-- #header -->
+ 
+ <div id="main">
+   <h2>Foo.</h2>
+   <p>Lorem ipsum dolor sit amet, consectetaur adipisicing elit, sed do tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea consequat.</p>
+ </div> <!-- #main -->
+ 
+ <div id="sidebar">
+   <ul>
+     <li><a href="#">Page One</a></li>
+     <li><a href="#">Page Two</a></li>
+     <li><a href="#">Page Three</a></li>
+   </ul>
+ </div> <!-- #sidebar -->
+ 
+ <div id="footer">
+   <p>&copy; 2010 My Site.</p>
+ </div> <!-- #footer -->
+ 
+ </body>
+ </html>
+
+
+// Listing 6-3. The WordPress equivalent
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" 
+ 	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" <?php language_attributes(); ?>>
+<head>
+<title><?php bloginfo('name'); ?><?php wp_title(); ?></title>
+<meta http-equiv="Content-Type" content="text/html; charset="<?php bloginfo('charset'); ?>" />
+<meta name="generator" content="WordPress <?php bloginfo('version'); ?>" /> 
+<!-- leave this for stats -->
+<meta name="description" content="<?php bloginfo('description'); ?>" /> 
+<link rel="stylesheet" href="<?php bloginfo('stylesheet_url'); ?>" type="text/css" />
+<link rel="alternate" type="application/rss+xml" title="RSS Feed" href="<?php bloginfo('rss2_url'); ?>" />
+<link rel="alternate" type="application/atom+xml" title="Atom Feed" href="<?php bloginfo('atom_url'); ?>" />
+<link rel="pingback" href="<?php bloginfo('pingback_url'); ?>" />
+<?php wp_head(); ?>
+</head>
+<body <?php body_class(); ?>>
+<div id="header">
+   <h1><?php bloginfo('name'); ?></h1>
+</div> <!-- #header -->
+<div id="main">
+ 	<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+ 		<h2 id="post-<?php the_ID(); ?>" class="<?php post_class(); ?>">
+	  		<a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent link to <?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+		</h2>
+		<?php the_content(); ?>
+		<?php wp_link_pages(); ?>
+	    <div class="commentblock">
+	 		<?php comments_template(); ?>
+	    </div><!--commentblock-->
+	 	<?php  endwhile; ?>
+	     <div class="navigation">
+	         <div class="alignleft"><?php posts_nav_link(); ?></div>	
+	         <div class="clear"><!-- --></div>
+	     </div><!-- .navigation -->
+		<?php else: ?>
+		<h2>Not Found</h2>
+			<p>The posts you were looking for could not be found.</p>
+	<?php endif; ?>
+</div> <!-- #main -->
+
+<div id="sidebar">
+<?php if ( !dynamic_sidebar('Sidebar') ) : endif; ?>
+</div> <!-- #sidebar -->
+<div id="footer">
+   <p>&copy; <?php echo date('Y '); bloginfo('name'); ?></p>
+</div> <!-- #footer -->
+<?php wp_footer(); ?>
+</body>
+</html>
+
+
+// Listing 6-4. The classes on a single post
+
+<body class="single postid-63">
+
+
+// Listing 6-6. The classes on page 2 of a category archive
+
+<body class="archive paged category category-news paged-2 category-paged-2">
+
+
+// Listing 6-7. Adding classes to the body_class() function 
+
+<body <?php body_class('main extra-class'); ?>>
+// output:
+<body class="single postid-63 main extra-class">
+
+
+// Listing 6-8. Sample output of the post_class() function
+
+<h2 class="post-188 post type-post hentry category-cat-a category-cat-b category-cat-c category-uncategorized category-aciform tag-tag1 tag-tag2 tag-tag3">
+
+
+// Listing 6-9. The Loop
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+ 	<h2 id="post-<?php the_ID(); ?>" class="<?php post_class(); ?>">
+  	<a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent link 
+to <?php the_title(); ?>"><?php the_title(); ?></a>
+</h2>
+ 	<?php the_content(); ?>
+        <?php wp_link_pages(); ?>
+       <div class="commentblock">
+ 		<?php comments_template(); ?>
+       </div><!--commentblock-->
+ 	<?php endwhile; ?>
+     <div class="navigation">
+         <div class="alignleft"><?php posts_nav_link(); ?></div>	
+         <div class="clear"><!-- --></div>
+     </div><!-- .navigation -->
+ <?php endif; ?>
+
+
+// Listing 6-10. Changing the "more" link text
+
+<?php the_content("Continue reading..."); ?>
+
+
+// Listing 6-11. The comment list
+
+<h3 id="comments"><?php comments_number('No Comments', 'One Comment', '% Comments' );?> to &#8220;<?php the_title(); ?>&#8221;</h3>
+
+<div class="navigation">
+	<div class="alignleft"><?php previous_comments_link() ?></div>
+	<div class="alignright"><?php next_comments_link() ?></div>
+</div>
+
+<ol class="commentlist">
+<?php wp_list_comments(); ?>
+</ol>
+
+<div class="navigation">
+	<div class="alignleft"><?php previous_comments_link() ?></div>
+	<div class="alignright"><?php next_comments_link() ?></div>
+</div>
+
+
+// Listing 6-12. Displaying comments with a loop
+
+<h3 id="comments">Comments</h3> 
+<ol>
+<?php foreach ($comments as $comment) : ?>
+	<?php $comment->comment_content)) : ?>
+
+		<li id="comment-<?php comment_ID() ?>">
+		<div class="comments-body"><?php comment_text() ?></div>
+			<p class="comments-post">Posted by <?php comment_author_link() ?> on <a href="#comment-<?php comment_ID() ?>" title=""><?php comment_date('F j, Y') ?> at <?php comment_time() ?></a> <?php edit_comment_link('e','',''); ?></p>
+		</li>
+	<?php endif; ?>
+<?php endforeach; ?>
+</ol>
+
+
+//Listing 6-13. The widget area in sidebar.php
+
+<div id="sidebar" class="widget-area">
+<ul>
+<?php if ( !dynamic_sidebar('first-widget-area') ) : // the ID of the sidebar ?>
+	<li id="search" class="widget-container widget_search">
+		<?php get_search_form(); ?>
+	</li>
+
+	<li id="archives" class="widget-container">
+		<h3 class="widget-title"><?php _e( 'Archives'); ?></h3>
+		<ul>
+			<?php wp_get_archives('type=monthly'); ?>
+		</ul>
+	</li>
+
+<?php endif; // end primary widget area ?>
+</ul>
+</div><!-- first .widget-area -->
+
+
+// Listing 6-14. Including multiple sidebar files
+
+<?php get_sidebar(); ?>		// sidebar.php
+<?php get_sidebar('page'); ?>	// sidebar-page.php
+<?php get_sidebar('author'); ?> // sidebar-author.php
+
+
+// Listing 6-15. The theme stylesheet header
+
+/*
+Theme Name: Twenty Ten
+Theme URI: http://wordpress.org/
+Description: The 2010 default theme for WordPress.
+Author: the WordPress team
+Version: 0.7
+Tags: black, blue, white, two-columns, fixed-width, custom-header, theme-options, threaded-comments, sticky-post, translation-ready, microformats, rtl-language-support
+*/
+
+
+// Listing 6-16. the_date and the_time in the Loop
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<h3 class="date"><?php the_date(); // prints once per day ?></h3>
+ 	<h2 id="post-<?php the_ID(); ?>" class="<?php post_class(); ?>">
+  	<a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent link 
+to <?php the_title(); ?>"><?php the_title(); ?></a>
+</h2>
+ 	<?php the_content(); ?>
+        <?php wp_link_pages(); ?>
+<p class="postmeta">Posted on 
+<?php 
+// these dates and times will print for every post
+the_time(get_option("date_format")); // uses date format instead of time 
+?>
+at <?php the_time(); // uses time format by default ?>
+</p>
+       <div class="commentblock">
+ 		<?php comments_template(); ?>
+       </div><!--commentblock-->
+ 	<?php endwhile; ?>
+     <div class="navigation">
+         <div class="alignleft"><?php posts_nav_link(); ?></div>	
+         <div class="clear"><!-- --></div>
+     </div><!-- .navigation -->
+ <?php endif; ?>
+
+
+// Listing 6-17. The Show Template plugin in action
+<div id="footer" role="contentinfo">
+	<p>
+		Testing is proudly powered by
+		<a href="http://wordpress.org/">WordPress</a>
+		<br /><a href="http://wordpress/feed/">Entries (RSS)</a>
+		and <a href="http://wordpress/comments/feed/">Comments (RSS)</a>.
+		<!-- 14 queries. 0.169 seconds. -->
+	</p>
+</div>
+</div>
+
+<!-- Active Template: /Users/steph/Sites/wordpress/wp-content/themes/default/single.php -->
+</body>
+</html>
+
+
+// Listing 6-18. Displaying the "not found" error message in theme files other than 404.php
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+ 	<h2 id="post-<?php the_ID(); ?>">
+  	<a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent link 
+to <?php the_title(); ?>"><?php the_title(); ?></a>
+</h2>
+ 	<?php the_content(); ?>
+        <?php wp_link_pages(); ?>
+       <div class="commentblock">
+ 		<?php comments_template(); ?>
+       </div><!--commentblock-->
+ 	<?php  endwhile; ?>
+     <div class="navigation">
+         <div class="alignleft"><?php posts_nav_link(); ?></div>	
+         <div class="clear"><!-- --></div>
+     </div><!-- .navigation -->
+<?php else: ?>
+	<h2>Not Found</h2>
+	<p>The posts you were looking for could not be found.</p>
+<?php endif; ?>
+
+// Listing 6-19. The Simplex Flex comments.php template
+
+<div id="comments">
+<?php if ( post_password_required() ) : ?>
+<div class="nopassword"><?php _e( 'This post is password protected. Enter the password to view any comments.', 'simplex-flex' ); ?></div>
+</div><!-- .comments -->
+
+<?php
+return;
+endif;
+?>
+
+<?php // Display the header for the comment section ?>
+
+<?php if ( have_comments() ) : // if there are comments ?>
+<h3 id="comments-title"><?php comments_number( 
+sprintf(__('No Responses to %s', 'simplex-flex'), '<em>' . get_the_title() . '</em>'),
+sprintf(__('One Response to %s', 'simplex-flex'), '<em>' . get_the_title() . '</em>'),
+sprintf(__('%% Responses to %s', 'simplex-flex'), '<em>' . get_the_title() . '</em>')
+); ?> </h3>
+
+<?php // Display navigation for paged comments, at the top of the list ?>
+
+<?php if ( get_comment_pages_count() > 1 ) : // if there is more than one page... ?>
+<div class="navigation">
+<div class="nav-previous"><?php previous_comments_link( __('&larr; Older Comments', 'simplex-flex') ); ?></div>
+<div class="nav-next"><?php next_comments_link( __('Newer Comments &rarr;', 'simplex-flex') ); ?></div>
+</div>
+<?php endif; ?>
+
+<?php // Display the list of comments ?>
+
+<ol class="commentlist">
+<?php wp_list_comments(); ?>
+</ol>
+
+<?php // Display navigation for paged comments, at the bottom of the list ?>
+
+<?php if ( get_comment_pages_count() > 1 ) : // if there is more than one page... ?>
+<div class="navigation">
+<div class="nav-previous"><?php previous_comments_link( __('&larr; Older Comments', 'simplex-flex') ); ?></div>
+<div class="nav-next"><?php next_comments_link( __('Newer Comments &rarr;', 'simplex-flex') ); ?></div>
+</div>
+<?php endif; ?>
+
+<?php else : // else there are no comments yet... ?>
+
+<?php if ( comments_open() ) : // If comments are open, but there are no comments (nothing to do here) ?>
+
+<?php else : // if comments are closed ?>
+<p class="nocomments"><?php _e('Comments are closed.', 'simplex-flex'); ?></p>
+
+<?php endif; ?>
+<?php endif; ?>
+
+<?php // Display the comment form ?>
+
+<?php comment_form(); ?>
+
+</div><!-- #comments -->
+
+
+// Listing 6-20. Using the get_template_part function
+
+get_template_part('loop'); 		// loop.php
+get_template_part('loop', 'index');  // loop-index.php
+
+
+// Listing 6-21. Basic styles necessary to support aligned images and image galleries
+
+img.alignright {float:right; margin:0 0 1em 1em}
+img.alignleft {float:left; margin:0 1em 1em 0}
+img.aligncenter {display: block; margin-left: auto; margin-right: auto}
+a img.alignright {float:right; margin:0 0 1em 1em}
+a img.alignleft {float:left; margin:0 1em 1em 0}
+a img.aligncenter {display: block; margin-left: auto; margin-right: auto}
+
+
+// Listing 6-22. A sidebar.php file that calls other sidebar files conditionally
+
+<div id="sidebar">
+<?php get_sidebar('nav'); ?>
+<?php 
+if ($post->ID == 2675)
+	get_sidebar('book'); 
+if (is_page())
+	get_sidebar('pages');
+} 
+?>
+</div>
+
+
+// Listing 6-23. Listing subcategories and limiting the loop to the parent category
+
+<h2 class="pagetitle"><?php single_cat_title(); ?></h2>
+<?php
+$catid = get_query_var('cat');
+?>
+<ul class="subcategories">
+        <?php $cats = get_categories('order=desc&title_li=&child_of='.$catid);
+		foreach ($cats as $cat) { ?>
+        	<li>
+                <h4><a href="<?php echo get_category_link( $cat->cat_ID ); ?>" rel="bookmark" title="<?php echo $cat->cat_name; ?>"><?php echo $cat->cat_name; ?></a></h4> 
+            </li>
+		<?php }
+		?>
+</ul>
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<?php if (in_category($catid) ) : ?>
+	<h2 <?php post_class(); ?>><a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent Link to <?php the_title_attribute(); ?>"><?php the_title(); ?></a></h2> 
+	<?php the_content(); ?>
+<?php endif; endwhile; ?>
+
+
+// Listing 6-24. Including a sidebar file with author information
+
+<?php get_sidebar(); ?>		// sidebar.php
+<?php get_sidebar('author'); ?> // sidebar-author.php
+
+
+// Listing 6-25. Using the wp_nav_menu function
+
+<?php wp_nav_menu( 'sort_column=menu_order&format=ul&menu_class=nav' ); ?> 
+
+
+// Listing 6-26. Changing the wp_nav_menu fallback function
+
+<?php wp_nav_menu( 'sort_column=menu_order&fallback_cb=wp_list_categories' ); ?>
+
+
+// Listing 6-27. Using the wp_list_pages function
+
+<!-- all pages in alphabetical order -->
+<ul> <?php wp_list_pages(); ?> </ul>
+<!-- all pages in menu order -->
+<ul> <?php wp_list_pages('sort_column=menu_order'); ?> </ul>
+<!-- to exclude a single page (in this case, the one with an ID of 12) -->
+<ul> <?php wp_list_pages('sort_column=menu_order&exclude=12'); ?> </ul>
+
+
+// Listing 6-28. Using the wp_page_menu function
+
+<!-- all pages in menu order, then alphabetically by page title -->
+<?php wp_page_menu(); ?> 
+<!-- the above, plus a 'home' link, with a different class on the <ul> -->
+<?php wp_page_menu('show_home=true&menu_class=nav'); ?> 
+
+
+// Listing 6-29. Using the wp_list_categories function
+
+<!-- all categories in alphabetical order -->
+<ul> <?php wp_list_categories(); ?> </ul>
+<!-- all categores in menu order: My Category Order plugin required -->
+<ul> <?php wp_list_pages('sort_column=menu_order'); ?> </ul>
+<!-- show only parent categories -->
+<ul> <?php wp_list_categories('depth=1'); ?> </ul>
+
+
+// Listing 6-30. Appending the category list to your page lists
+
+function add_category_list($pagelist) {
+	$cats = wp_list_categories('echo=0&title_li=');
+	return $pagelist.$cats;
+}
+add_filter('wp_list_pages', 'add_category_list');
+
+
+// Listing 6-31. Defining two widget areas
+
+function my_widgets_init() {
+	register_sidebar( array(
+		'name' => 'First Widget Area',
+		'id' => 'first-widget-area',
+		'description' => __( 'The first widget area'),
+		'before_widget' => '<li id="%1$s" class="widget-container %2$s">',
+		'after_widget' => "</li>",
+		'before_title' => '<h3 class="widget-title">',
+		'after_title' => '</h3>',
+	) );
+	register_sidebar( array(
+		'name' => 'Second Widget Area',
+		'id' => 'second-widget',
+		'description' => __( 'The second widget area'),
+		'before_widget' => '<li id="%1$s" class="widget-container %2$s">',
+		'after_widget' => "</li>",
+		'before_title' => '<h3 class="widget-title">',
+		'after_title' => '</h3>',
+	) );
+}
+
+// Add the widget areas
+add_action( 'init', 'my_widgets_init' );
+
+
+// Listing 6-32. A text widget generated by Listing 6-30
+
+<li id="text-3" class="widget-container widget_text"> 
+	<h3 class="widgettitle">This is a widget</h3>
+	<div class="textwidget">
+		<p>And this is its text!</p>
+	</div>
+</li>
+
+// Listing 6-33. Enabling navigation menus 
+
+// in functions.php:
+add_theme_support('nav-menus'); 
+// wherever your current menu tag is located, replace it with: 
+<?php wp_nav_menu( 'sort_column=menu_order' ); ?> 
+
+
+// Listing 6-34. Enabling featured images
+
+add_theme_support( 'post-thumbnails' );
+
+
+// Listing 6-35. Using the featured image in a template
+
+<?php the_post_thumbnail( 'thumbnail' ); ?>
+
+
+// Listing 6-36. Enabling custom backgrounds in functions.php
+
+add_custom_background();
+
+
+// Listing 6-37. Enabling custom headers in functions.php
+
+define('HEADER_TEXTCOLOR', '');
+define('HEADER_IMAGE', '%s/images/header.jpg');	// %s is theme directory uri
+define('HEADER_IMAGE_WIDTH', 800 );			// in pixels
+define('HEADER_IMAGE_HEIGHT', 200 );
+define('NO_HEADER_TEXT', true );
+
+function simplex_header_styles() { ?>
+<style type="text/css">
+	#headimg {
+	height: <?php echo HEADER_IMAGE_HEIGHT; ?>px;
+	width: <?php echo HEADER_IMAGE_WIDTH; ?>px;
+	}
+<?php if (NO_HEADER_TEXT) { ?>
+	#header h1, #header #desc {
+	text-indent: -99999px;
+	}
+<?php } ?>
+</style>
+<?php
+}
+
+add_custom_image_header( '', 'simplex_header_styles' );
+add_action('wp_head', 'simplex_header_styles');
+
+
+// Listing 6-38. Printing the custom header in header.php
+
+<div id="header">
+	<img src="<?php header_image(); ?>" width="<?php echo HEADER_IMAGE_WIDTH; ?>" height="<?php echo HEADER_IMAGE_HEIGHT; ?>" alt="" id="header-bg" />
+	<a href="<?php echo get_settings('home'); ?>"><h1><?php bloginfo('name'); ?></h1></a>
+	<p id="desc"><?php bloginfo('description'); ?></p>
+</div>
+
+
+// Listing 6-39. Enabling shortcode parsing in text widgets
+
+add_filter('widget_text', 'shortcode_unautop');
+add_filter('widget_text', 'do_shortcode');
+
+
+// Listing 6-40. Changing excerpt length and adding "read more" link
+
+// Control excerpt length
+function twentyten_new_excerpt_length( $length ) {
+	return 40;
+}
+add_filter( 'excerpt_length', 'twentyten_new_excerpt_length' );
+
+// Make a nice read more link on excerpts
+function twentyten_new_excerpt_more($more) {
+	return '&nbsp;&hellip; <a href="'. get_permalink() . '">' . 'Continue&nbsp;reading&nbsp;<span class="meta-nav">&rarr;</span>' . '</a>';
+}
+add_filter( 'excerpt_more', 'twentyten_new_excerpt_more' );
+
+
+// Listing 6-41. Importing the parent theme styles
+
+/*  
+    Theme Name: Cub Reporter
+    Theme URI: http://sillybean.net
+    Description: A child theme for Journalist, by <a href="lucianmarin.com">Lucian E. Marin</a>
+    Author: Stephanie Leary
+    Author URI: http://sillybean.net
+    Template: journalist
+    Version: 1.0
+    License: GPL
+*/
+@import url(../journalist/style.css);
+
+// Listing 6-42. Replacing a parent theme's functions
+
+// in Twenty Ten's functions.php
+if ( ! function_exists( 'twentyten_admin_header_style' ) ) :
+function twentyten_admin_header_style() {
+?>
+<style type="text/css">
+	#headimg {
+		height: <?php echo HEADER_IMAGE_HEIGHT; ?>px;
+		width: <?php echo HEADER_IMAGE_WIDTH; ?>px;
+	}
+	#headimg h1, #headimg #desc {
+		display: none;
+	}
+</style>
+<?php
+}
+endif;
+
+// in your child theme's functions.php
+function twentyten_admin_header_style() {
+?>
+<style type="text/css">
+	#headimg {
+		height: <?php echo HEADER_IMAGE_HEIGHT; ?>px;
+		width: <?php echo HEADER_IMAGE_WIDTH; ?>px;
+	}
+	#headimg h1, #headimg #desc {
+		text-indent: -99999px;
+	}
+</style>
+<?php
+}
+
+
+// Listing 6-43. Getting URLs for parent and child theme stylesheets and directories
+<?php
+bloginfo('stylesheet_directory');	// Child theme directory
+bloginfo('stylesheet_url'); 		// Child theme stylesheet
+bloginfo('template_directory');		// Parent theme directory
+bloginfo('template_url');		// Parent theme stylesheet
+?>

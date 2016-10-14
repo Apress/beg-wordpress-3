@@ -1,0 +1,594 @@
+// Listing 7-1. Excluding a category from the home page
+
+<?php if ( is_home() ) {
+	query_posts( '&cat=-7' );
+}
+// your usual Loop can go here
+?>
+
+
+// Listing 7-2. Showing only one category
+
+<?php if ( is_home() ) {
+query_posts( '&cat=7' );
+}
+// your usual Loop can go here
+?>
+
+
+// Listing 7-3. Showing the five most recent pages on the home page
+
+<?php
+/*
+Template Name: Home Page
+*/
+?>
+<?php get_header(); ?>
+
+<div id="main">
+<?php query_posts( 'post_type=page&orderby=date&posts_per_page=5' ); ?>
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<div class="post" id="<?php echo $post->post_name; ?>">
+	<h2><a href="<?php the_permalink(); ?>" 
+title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+</h2>
+    	<?php the_content(); ?>  
+
+</div><!-- .post -->
+<?php endwhile; ?>
+<?php else: ?>
+	<p>Sorry, these posts could not be found.</p>
+<?php endif; ?>
+</div><!-- #main -->
+
+<?php get_sidebar(); ?>
+<?php get_footer(); ?>
+
+
+// Listing 7-4. A home page template file with a Loop showing children of page ID 1364
+
+<?php
+/*
+Template Name: Home Page
+*/
+?>
+<?php get_header(); ?>
+
+<div id="main">
+<?php query_posts( 'post_type=page&orderby=menu_order&order=asc&post_parent=1364&posts_per_page=-1' );
+?>
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<div class="post" id="<?php echo $post->post_name; ?>">
+	<h2><a href="<?php the_permalink(); ?>" 
+title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+</h2>
+    	<?php the_content(); ?>  
+
+</div><!-- .post -->
+<?php endwhile; ?>
+<?php else: ?>
+	<p>Sorry, these posts could not be found.</p>
+<?php endif; ?>
+</div><!-- #main -->
+
+<?php get_sidebar(); ?>
+<?php get_footer(); ?>
+
+
+// Listing 7-5. Listing children of the current page if the content is empty
+
+<?php
+/*
+Template Name: Home Page
+*/
+?>
+<?php get_header(); ?>
+
+<div id="main">
+<?php 
+query_posts( 
+ 'post_type=page&orderby=menu_order&order=asc&post_parent=1364&posts_per_page=-1' );
+?>
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<div class="post" id="<?php echo $post->post_name; ?>">
+	<h2><a href="<?php the_permalink(); ?>" 
+title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a>
+</h2>
+
+<?php
+$content = get_the_content();
+if (empty($content)) {
+	$children = wp_list_pages(
+ 'title_li=&depth=1&child_of='.$post->ID.'&echo=0&sort_column=menu_order' );
+	if ($children) { ?>
+		<ul id="childpages">
+		<?php echo $children; ?>
+		</ul>
+	<?php }
+} 
+else {
+the_content();
+}
+?>
+
+</div><!-- .post -->
+<?php endwhile; ?>
+<?php else: ?>
+	<p>Sorry, these posts could not be found.</p>
+<?php endif; ?>
+</div><!-- #main -->
+
+<?php get_sidebar(); ?>
+<?php get_footer(); ?>
+
+
+// Listing 7-6. Listing a post’s attached files inside the Loop
+
+<?php
+$attachments = get_children(array(
+	'post_type' => 'attachment',
+	'numberposts' => -1,
+	'post_status' => null,
+	'post_parent' => $post->ID
+	));
+if ($attachments) { ?> 
+   <ul class="attachments">	<?php 
+	foreach ($attachments as $attachment) {
+		if (substr($attachment->post_mime_type, 0, 5) != 'image') {
+			$type = str_replace('/', '-', $attachment->post_mime_type);
+			echo "<li class='$type'>";
+			the_attachment_link($attachment->ID, false);
+			echo '</li>';
+		}
+	}
+?> </ul>	
+<?php } ?>
+
+
+// Listing 7-7. CSS for Listing 7-6
+
+ul.attachments li { 
+	list-style: none;
+}
+ul.attachments li a {
+	padding-left: 20px;
+	line-height: 18px;
+	background-position-top: 0; 
+	background-position-left: .5em; 
+	background-repeat: no-repeat;
+	background-image: url(img/icons/attachment.gif);  /* default */
+}
+ul.attachments li.application-pdf a {
+	background-image: url(img/icons/pdf.gif); 
+}
+ul.attachments li.application-zip a {
+	background-image: url(img/icons/zip.gif); 
+}
+
+
+// Listing 7-8. Resetting the query 
+
+<?php wp_reset_query(); ?>
+
+
+// Listing 7-9. Preserving the original query
+
+<?php
+$original_query = $query_string;
+// query from Listing 7-3
+query_posts( 'post_type=post&orderby=date&posts_per_page=5' );
+
+if (have_posts()) : while (have_posts()) : the_post(); ?>
+	// the contents of your Loop goes here
+<?php endwhile; endif; ?>
+
+<?php
+
+wp_reset_query();
+
+// Another Loop could go here.
+// query_posts($original_query);
+
+?>
+
+
+// Listing 7-10. Creating a Loop for each top-level category
+
+<?php
+$categories = get_categories();
+
+foreach ($categories as $cat) : ?>
+<div class="category_box">
+<?php	
+// get most recent post in cat
+query_posts('posts_per_page=1&cat='.$cat->cat_ID);
+if (have_posts()) : while (have_posts()) : the_post();
+ ?>
+<h2><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a></h2>
+<?php the_content('continue reading...'); ?>
+ <?php
+	endwhile;
+	endif;
+	wp_reset_query();
+	// get 4 most recent posts in cat offset by 1
+	query_posts('posts_per_page=4&offset=1&cat='.$cat->cat_ID);
+	if (have_posts()) : ?>
+		<ul class="more-stories">
+		<?php
+		while (have_posts()) : the_post();
+		  ?>
+		<li><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a></li>
+	  <?php
+	endwhile; ?>
+	</ul> <!-- .more-stories -->
+	<?php
+	endif;
+	wp_reset_query();
+	?>
+</div> <!-- .category_box -->
+<?php endforeach; ?>
+
+
+// Listing 7-11. Displaying the post author’s five most recent other posts inside the Loop
+
+<?php
+$original_query = $query_string;
+
+query_posts( 'post_type=post&orderby=date&posts_per_page=5&exclude'.$post->ID.'&author='.$post->post_author );
+
+if (have_posts()) : ?>
+<ul class="authorposts">
+	<?php while (have_posts()) : the_post(); ?>
+	<li><a href="<?php the_permalink() ?>" rel="bookmark" title="'Permanent link to <?php the_title_attribute(); ?>">
+		<?php the_title(); ?></a></li>
+		<?php endwhile; ?>
+</ul>
+<?php endif; 
+
+wp_reset_query();
+?>
+
+
+// Listing 7-12. Setting up post data to use template tags outside the Loop
+
+<div id="sidebar">
+<?php
+setup_postdata($post);
+?>
+<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
+<p class="post-tags"><?php the_tags(); ?></p>
+</div>
+
+
+// Listing 7-13. Checking whether you’re inside the Loop
+
+<p>Am I inside the Loop? <?php if (in_the_loop()) echo "yes"; else echo "no"; ?></p>
+
+
+// Listing 7-14. The usual title tag and its output
+
+<title><?php wp_title(); ?><?php bloginfo('name'); ?></title>
+
+<title>example.com &raquo; Howdy, stranger.</title>
+
+
+// Listing 7-15. The revised title tag and its output
+<title><?php wp_title('|', true, 'right'); ?><?php bloginfo('name'); ?></title>
+
+<title>Howdy, stranger. | example.com</title>
+
+
+// Listing 7-16. Creating meta keywords tag from post categories and tags in header.php
+
+<?php if (is_single()) {
+  foreach((get_the_tags()) as $tag) {
+    $keywords[] = strtolower($tag->name);
+  }
+  foreach((get_the_category()) as $category) {
+    $keywords[] = strtolower($category->cat_name);
+  }
+?>
+<meta name="keywords" content="<?php echo implode(", ", array_unique($keywords)); ?>" />
+<?php } ?>
+
+
+// Listing 7-17. Using the_excerpt as a meta description
+
+<?php 
+if (is_singular()): 
+	global $post;
+	setup_postdata($post); 
+	?>
+	<meta name="description" content="<?php the_excerpt_rss(); ?>" />
+<?php endif; ?>
+
+
+// Listing 7-18. Displaying the default permalink in a Loop
+
+<?php if (have_posts()) : while (have_posts()) : the_post(); ?>
+<h2><a href="<?php the_permalink(); ?>" title="<?php the_title_attribute(); ?>"><?php the_title(); ?></a></h2>
+<?php the_content(); ?>
+<p>Sharing this post? <?php the_shortlink(); ?></p>
+<?php endif; ?>
+
+
+// Listing 7-19. Canonical and shortlinks in the <head> section
+
+<link rel='canonical' href='http://wordpress/2008/09/layout-test/' /> 
+<link rel='shortlink' href='http://wordpress/?p=188' /> 
+
+
+// Listing 7-20. Including jQuery
+
+<?php
+function add_jquery() {
+	wp_enqueue_script('jquery');            
+	wp_enqueue_script('jquery-ui-core');
+}    
+add_action('wp_head', 'add_jquery');
+?>
+
+
+// Listing 7-21. Using jQuery in WordPress
+
+jQuery("div.main").addClass("wide");
+
+jQuery(document).ready(function($) {
+    // $() will work inside this function; otherwise use jQuery()
+    $("div.main").addClass("wide");
+});
+
+
+// Listing 7-22. How not to link scripts
+
+function slider_scripts() { ?> 
+	<script type="text/javascript" src="<?php bloginfo('url'); ?>/wp-content/themes/test-theme/jquery.js"></script> 
+	<script type="text/javascript" src="<?php bloginfo('url'); ?>/wp-content/themes/test-theme/jquery-slider.js"></script> 
+<?php }
+add_action('wp_head', 'slider_scripts');   
+
+
+// Listing 7-23. Enqueueing scripts
+
+function add_header_scripts() {
+	wp_enqueue_script('header-script', <?php bloginfo('stylesheet_directory'); ?>'/js/header-script.js', array('jquery'), '1.0', false);
+}
+add_action('wp_head', 'add_header_scripts');
+
+
+// Listing 7-24. Adding sortable.js if the content contains a table
+
+function add_sortable($posts) {
+	if (empty($posts)) return $posts;
+	$found = false;
+	foreach ($posts as $post) {
+		if (stripos($post->post_content, '<table') === false) {
+			$found = true;
+			break;
+		}
+	}
+	if ($found) {
+		wp_enqueue_script('sortable', get_bloginfo('stylesheet_directory').'/js/sortable.js');
+	}
+	return $posts;
+}
+add_filter('the_posts', 'add_sortable');
+
+
+// Listing 7-25. Enqueuing styles
+
+function add_header_styles() {
+	wp_enqueue_style( ‘print-styles’, get_bloginfo('stylesheet_directory').'/css/pring.css', false, false, ‘print’);
+}
+add_action('wp_head', 'add_header_styles');
+
+
+// Listing 7-26. Basic db-error.php file
+
+<html>
+<head>
+	<title>Database Error | MySite.com</title>
+</head>
+<body>
+	<h1>Database Error</h1>
+	<p>The database is not responding, and this site is unavailable. We’re sorry! Please try again later.</p>
+</body>
+</html>
+
+
+// Listing 7-27. Maintenance mode file
+
+<?php
+$protocol = $_SERVER["SERVER_PROTOCOL"];
+if ( 'HTTP/1.1' != $protocol && 'HTTP/1.0' != $protocol )
+        $protocol = 'HTTP/1.0';
+header("$protocol 503 Service Unavailable", true, 503 );
+header('Content-Type: text/html; charset=utf-8' );
+?>
+<html>
+<head>
+	<title>Down for Maintenance | MySite.com</title>
+</head>
+<body>
+	<h1>Down for Maintenance</h1>
+	<p>This site is temporarily unavailable due to scheduled maintenance. Please try again later.</p>
+</body>
+</html>
+<?php die(); ?>
+
+
+// Listing 7-28. Adding a theme options page to the admin menu
+
+function simplex_menu() {
+	add_theme_page('Simplex Flex Options', 'Simplex Options', 'edit_theme_options', __FILE__, 'simplex_options_page');
+}
+add_action('admin_menu', 'simplex_menu');
+
+
+// Listing 7-29. Registering a setting and saving the default values
+function simplex_menu() {
+	add_theme_page('Simplex Flex Options', 'Simplex Options', 'edit_theme_options', __FILE__, 'simplex_options_page');
+	register_setting('simplex_options', 'simplex_options');
+	// set defaults
+	$options = array(
+		'width' => 'fixed',
+		'cols' => '3',
+		'sitename' => 'yes',
+		'css' => '',
+	);
+	add_option('simplex_options', $options, '', 'yes');
+}
+add_action('admin_menu', 'simplex_menu');
+
+
+// Listing 7-30. The theme options form 
+function simplex_options_page() { ?>
+  <div class="wrap">
+  <h2>Simplex Flex Options</h2>
+  <form method="post" action="options.php">
+	<?php settings_fields('simplex_options'); ?>
+	<?php $options = get_option('simplex_options'); ?>
+  <table class="form-table">
+  <tr valign="top">
+  <th scope="row">Width</th>
+  <td><label><input type="radio" name="simplex_options[width]" <?php checked('fixed', $options['width']); ?> value="fixed" /> Fixed</label>
+		<label><input type="radio" name="simplex_options[width]" <?php checked('flex', $options['width']); ?> value="flex" /> Flex</label>
+	</td>
+  </tr>
+<tr valign="top">
+  <th scope="row">Columns</th>
+  <td><label><input type="radio" name="simplex_options[cols]" <?php checked('left2', $options['cols']); ?> value="left2" /> 2 columns, sidebar left</label>
+	<label><input type="radio" name="simplex_options[cols]" <?php checked('right2', $options['cols']); ?> value="right2" /> 2 columns, sidebar right</label>
+	<label><input type="radio" name="simplex_options[cols]" <?php checked('col3', $options['cols']); ?> value="col3" /> 3 columns, sidebars on either side</label>
+	</td>
+  </tr>
+  <tr valign="top">
+  <th scope="row">Header text and image</th>
+  <td><label><input type="checkbox" name="simplex_options[sitename]" <?php checked('yes', $options['sitename']); ?> value="yes" /> 
+	Display site name and description superimposed over the header image?</label>
+  </td>
+  </tr>
+	<tr valign="top">
+  <th scope="row">Custom styles</th>
+  <td><label>Enter your CSS:</label><br />
+	<textarea name="simplex_options[css]"><?php echo $options['css']; ?></textarea>
+  </td>
+  </tr>
+  </table>
+  
+  <p class="submit">
+  	<input type="submit" class="button-primary" value="Save Changes" />
+  </p>
+  </form>
+  </div>
+<?php }
+// the ?> should be at the end of the functions.php file
+
+
+// Listing 7-31. Using checked() vs if
+
+<label><input type="radio" name="simplex_options[cols]" <?php checked('left2', $options['cols']); ?> value="left2" /> 2 columns, sidebar left</label>
+
+<label><input type="radio" name="simplex_options[cols]" <?php if ($options['cols'] == 'left2') { ?> value="left2" <?php } ?> /> 2 columns, sidebar left</label>
+
+
+// Listing 7-32. Using common form field names to store values in an array
+
+<label><input type="checkbox" name="simplex_options[sitename]" <?php checked('yes', $options['sitename']); ?> value="yes" /> 
+	Display site name and description superimposed over the header image?</label>
+
+<label>Enter your CSS:</label><br />
+	<textarea name="simplex_options[css]"><?php echo $options['css']; ?></textarea>
+
+
+// 	Listing 7-33. Styles for the options page
+
+function simplex_flex_admin_css() { ?>
+	<style type="text/css">
+		textarea { width: 32em; height: 8em; }
+	</style>
+<link rel="stylesheet" type="text/css" src="<?php bloginfo('stylesheet_directory'); ?>/admin-styles.css">
+<?php
+}
+
+
+// Listing 7-34. Adding a stylesheet to the options page
+
+function simplex_menu() {
+	$file = add_theme_page('Simplex Flex Options', 'Simplex Options', 'edit_theme_options', __FILE__, 'simplex_options_page');
+	add_action("admin_head-$file", 'simplex_flex_admin_css');
+	register_setting('simplex_options', 'simplex_options');
+	// set defaults
+	$options = array(
+		'width' => 'flex',
+		'cols' => '3',
+		'sitename' => 'yes',
+		'css' => ''
+	);
+	add_option('simplex_options', $options, '', 'yes');
+}
+add_action('admin_menu', 'simplex_menu');
+
+ 
+// Listing 7-35. A complete theme options page
+
+<?php 
+function simplex_menu() {
+	$css = add_theme_page('Simplex Flex Options', 'Simplex Options', 'edit_theme_options', __FILE__, 'simplex_options_page');
+	add_action("admin_head-$css", 'simplex_flex_admin_css');
+	register_setting('simplex_options', 'simplex_options');
+	// set defaults
+	$options = array(
+		'width' => 'flex',
+		'cols' => '3',
+		'sitename' => 'yes',
+		'css' => ''
+	);
+	add_option('simplex_options', $options, '', 'yes');
+}
+add_action('admin_menu', 'simplex_menu');
+
+function simplex_options_page() { ?>
+  <div class="wrap">
+  <h2>Simplex Flex Options</h2>
+  <form method="post" action="options.php">
+	<?php settings_fields('simplex_options'); ?>
+	<?php $options = get_option('simplex_options'); ?>
+  <table class="form-table">
+  <tr valign="top">
+  <th scope="row">Width</th>
+  <td><label><input type="radio" name="simplex_options[width]" <?php checked('fixed', $options['width']); ?> value="fixed" /> Fixed</label>
+		<label><input type="radio" name="simplex_options[width]" <?php checked('flex', $options['width']); ?> value="flex" /> Flex</label>
+	</td>
+  </tr>
+<tr valign="top">
+  <th scope="row">Columns</th>
+  <td><label><input type="radio" name="simplex_options[cols]" <?php checked('left2', $options['cols']); ?> value="left2" /> 2 columns, sidebar left</label>
+	<label><input type="radio" name="simplex_options[cols]" <?php checked('right2', $options['cols']); ?> value="right2" /> 2 columns, sidebar right</label>
+	<label><input type="radio" name="simplex_options[cols]" <?php checked('col3', $options['cols']); ?> value="col3" /> 3 columns, sidebars on either side</label>
+	</td>
+  </tr>
+  <tr valign="top">
+  <th scope="row">Header text and image</th>
+  <td><label><input type="checkbox" name="simplex_options[sitename]" <?php checked('yes', $options['sitename']); ?> value="yes" /> 
+	Display site name and description superimposed over the header image?</label>
+  </td>
+  </tr>
+	<tr valign="top">
+  <th scope="row">Custom styles</th>
+  <td><label>Enter your CSS:</label><br />
+	<textarea name="simplex_options[css]"><?php echo $options['css']; ?></textarea>
+  </td>
+  </tr>
+  </table>
+  
+  <p class="submit">
+  	<input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
+  </p>
+  </form>
+  </div>
+<?php }
+?>

@@ -1,0 +1,25 @@
+// Listing 11-1. SSL settings in wp-config.php
+
+// https for all admin sessions:
+define(‘FORCE_SSL_ADMIN’, true);
+
+//https required for login; optional for the rest of the admin session:
+define(‘FORCE_SSL_LOGIN’, true);
+
+
+// Listing 11-2. Removing the meta generator
+
+remove_action('wp_head', 'wp_generator');
+
+
+// 3.	Listing 11-3. Securing wp-config.php and .htaccess using .htaccess
+
+<Files wp-config.php>
+order allow,deny
+deny from all
+</Files>
+
+<Files .htaccess>
+order allow,deny
+deny from all
+</Files>
